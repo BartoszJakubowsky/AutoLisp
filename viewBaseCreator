@@ -1,0 +1,218 @@
+
+(defun matchPaths ()
+	(setq filepath (getvar "dwgprefix"))
+	(setq fullPathString (read (strcat "("(vl-string-translate "\\" " "  filepath)")")))
+	(setq strList (mapcar 'vl-princ-to-string fullPathString))
+	
+	(setq listLength (1- (length strList)))
+	(setq matchedPaths '())
+  
+	(while (<= 0 listLength)
+			(setq folderName (nth listLength strList)
+				  listLength (1- listLength))
+			(if (= folderName userFolderName)
+			(progn
+				(setq matchedPaths (append matchedPaths (list folderName)))
+				(setq listLength -1))
+			(setq matchedPaths (append matchedPaths (list folderName)))
+			)
+	)
+	(princ matchedPaths)
+)
+
+(defun filterNilFromList (lst)
+  (vl-remove-if '(lambda (x) (= x nil)) lst)
+)
+(defun pointsGetter ( key lst )
+	(setq initPointsList (mapcar 'cdr
+		(vl-remove-if-not
+			(function (lambda ( x ) (= key (car x))))
+			lst
+		)
+	))
+
+	(setq initPointLeft (nth 0 initPointsList))
+	(setq initPointRight (nth 1 initPointsList))
+	(setq pz 0.0)
+	(setq pxLeft (+ (nth 0 initPointLeft) 3.25 ))
+	(setq pxRight (- (nth 0 initPointRight) 3.25 ))
+	(setq pyDown (+ (nth 1 initPointLeft) 3.25 ))
+	(setq pyUp (- (nth 1 initPointRight)  3.25 ))
+
+	(setq verticalPoints (list (list pxLeft pyDown pz) (list pxLeft pyUp pz)))
+	(setq horizontalPoints (list (list pxLeft pyUp pz) (list pxRight pyUp pz)))
+
+	(princ (list verticalPoints horizontalPoints))
+)
+
+(defun dim (lst )
+    (setq j 0)
+	(while (< j (length lst))
+		
+		(setq pLst (nth j lst))
+		(princ pLst)
+   		(setq pt1 (nth 0 pLst))
+    	(setq pt2 (nth 1 pLst))
+		
+		(if (= j 0 )
+		(setq alignDim
+              (list (- (nth 0 pt2) dimSpace)
+                	(- (nth 1 pt2) dimSpace)
+              ))
+		(setq alignDim
+              (list (+ (nth 0 pt2) dimSpace)
+                	(+ (nth 1 pt2) dimSpace)
+              ))
+		)
+   
+   
+   		(if (= j 0 )
+   		(command "_dimaligned" pt1 pt2 alignDim)
+    	(command "_dimaligned" pt1 pt2 alignDim))
+   
+		(setq j (1+ j))
+	)  
+)
+(defun drawDimensions ( lst)
+	;key == points storage
+	(setq key 10)
+	(setq pointsList (filterNilFromList (pointsGetter key lst)))
+	(dim pointsList )
+)
+
+(defun createSubElement ()
+	(command "_layout" "_c" "BLAT (2)" name)
+	(setvar "clayout" name)
+		
+	(setvar "CLAYER" "RZUT")
+		(command "widokpodst" "" "y" element "" "sk" viewBaseScale "u" "w" "o" "ne" mainPoint "" "i")
+		(command "widokpodst" "" "y" element "" "sk" viewBaseScale "u" "w" leftPoint "" "i")
+		(setq toDim1 (entget (entlast)))
+		(command "widokpodst" "" "y" element "" "sk" viewBaseScale "u" "w" "o" "g" rightPoint "" "i")
+		(setq toDim2 (entget (entlast)))
+	(setvar "CLAYER" "0")
+  
+		(drawDimensions toDim1)
+		(drawDimensions toDim2)
+)
+
+(defun renameTable ()
+	(setq listNameInt 0)
+  	(setq newName "")
+	(setq allTextOnLayer (ssget "_X" (list '(0 . "MTEXT") (cons 8 "TABELA_OPIS") )))
+		(cond (allTextOnLayer
+		(repeat (setq cnt (sslength allTextOnLayer))
+			(setq el (entget (ssname allTextOnLayer (setq cnt (1- cnt)))))
+			(if (= (cdr (assoc 410 el)) (getvar 'ctab))
+				(progn
+					(if (> (length listName) 1)
+					(foreach lname listName 
+						(progn
+							(if (= listNameInt 0)
+         						(setq newName lname)
+								(setq newName (strcat newName "\n" lname))
+                            )
+        
+						(setq listNameInt (1+ listNameInt))
+        				(princ newName)
+						)
+					)
+					(setq newName (car listName))
+                    ) ; if
+      
+				(entmod (subst (cons 1 newName) (assoc 1 el) el))
+                ) ;progn
+			) ; ff
+		) ;repeat
+		) ; cond
+		) ;c cond
+	
+)
+
+; to check
+(defun xrefsCounter ()
+  vlax-vla-object->ename
+	(setq xr_dwg (vla-get-activedocument (vlax-get-acad-object)) xr_blk (vla-get-blocks xr_dwg))
+	(vlax-for blk xr_blk
+	(if (= (vla-get-IsXRef blk) :vlax-true)
+		(progn
+			(setq xl (cons blk xl))
+			; (setq name (vla-get-name blk))
+			; (setq ent (vlax-vla-object->ename blk))
+			; (createSubElement)
+		(princ))        
+	)
+	)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; get's a points from viewbase and calculates it 
+; to get normal edgqe points
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defun c:qqwe ()
+  
+  ;center point on layout tab for viebase
+(setq mainPoint (list 200 215.2493 0.0))
+(setq leftPoint (list 100.001 100.0 0.0))
+(setq rightPoint (list 299.999 100.0 0.0))
+  
+(setq viewBaseScale 0.15)
+(setq dimSpace 4)
+(setq tabName "BLAT (2)")
+
+(setq userFolderName (getstring "\nPodaj nazwę zestawu komponentów"))
+;store system variables
+(setq OLDSNAP (getvar "OSMODE")			
+      OLDBLIP (getvar "BLIPMODE")
+      OLDLIGHT (getvar "HIGHLIGHT"))
+  
+(setvar "OSMODE" 1)
+(setvar "CMDECHO" 0)			
+(setvar "BLIPMODE" 0)
+(setvar "clayout" "MODEL")
+(setq objects (ssget))
+(princ objects)
+(setvar "clayout" tabName)
+
+(entget  (ssname objects 0))
+(setq i (1- (sslength objects)))
+  
+(setq name (vl-filename-base (getvar "dwgname")))
+(setq element objects)
+  
+;creates a layout tab with dimensions
+(createSubElement)
+; (setq listName (list name))
+(setq listName '())
+(setq furnitureStructure (matchPaths))
+(setq listName (append listName furnitureStructure))
+(princ listName)
+  
+(renameTable)
+  
+  (if (> i 1)
+	(while (<= 0 i)
+		(setq e (ssname objects i)
+		      name  (cdr(assoc 2 (entget e)))
+			  i (1- i)
+		)
+
+		(setq element (ssadd e))
+		(createSubElement)
+   
+		; (setq furnitureStructure (matchPaths))
+		(setq listName (list name))
+		(setq listName (append listName furnitureStructure))
+   
+		(renameTable)
+	)  
+  )
+  
+  ;reset system variables
+  (setvar "OSMODE" OLDSNAP)			
+  (setvar "BLIPMODE" OLDBLIP)
+  (setvar "HIGHLIGHT" OLDLIGHT)
+  (princ)
+)
+
