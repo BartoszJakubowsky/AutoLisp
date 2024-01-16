@@ -1,0 +1,94 @@
+; (defun C:RBLOCK (/ SB SBD OLD_NAME NEW_NAME)
+;  (setq SB NIL)
+;  (while (null SB)
+;    (setq SB (entsel "\nSelect block to RENAME: "))
+;    (if SB
+;      (progn (setq SB  (car SB)
+;                   SBD (entget SB)
+;             )
+;             (if (= (cdr (assoc 0 SBD)) "INSERT")
+;               (redraw SB)
+;               (progn (redraw SB)
+;                      (setq SB NIL)
+;                      (princ "\nItem selected is not a block.")
+;               )
+;             )
+;      )
+;      (princ "\nNothing selected.  Try again.")
+;    )
+;  )
+;  (setq OLD_NAME (cdr (assoc 2 SBD)))
+;  (princ (strcat "\n OLD Block Name: " OLD_NAME))
+;  (setq NEW_NAME (getstring "\n NEW Block Name: "))
+;  (command "rename" "b" OLD_NAME NEW_NAME)
+;  (princ (strcat "\n BLOCK RENAMED TO: " NEW_NAME))
+;  (princ)
+; )
+; (princ "\nRBLOCK Loaded.  Type RBLOCK to Start.")
+; (princ)
+
+; (while (tblsearch "BLOCK" (setq blk (strcat nm (itoa (setq i (1+ i)))))))
+
+
+; (defun c:countBlocks (/)
+; ;   (setq blocksList (tblsearch "BLOCK" "~Title*"))
+;   (setq blocksList (ssget "_X" '((0 . "INSERT") (2 . "~Title*") (410 . "Model"))))
+;   (if (setq ss (ssget "_X" '((0 . "INSERT"))))
+;    (vl-remove-if-not
+;      '(lambda (x) (eq :vlax-true
+;                       (vla-get-HasAttributes x)))
+;        (mapcar 'vlax-ename->vla-object
+;          (mapcar 'cadr (ssnamex ss)))))
+;   (princ ss)
+;   (princ)
+; )
+
+
+; (defun c:GetBlkWithAtt (/ ss)
+;  (vl-load-com)
+;  (if (setq ss (ssget "_X" '((0 . "INSERT"))))
+;    (vl-remove-if-not
+;      '(lambda (x) (eq :vlax-true
+;                       (vla-get-HasAttributes x)))
+;        (mapcar 'vlax-ename->vla-object
+;          (mapcar 'cadr (ssnamex ss)))))
+;   (princ)
+; )
+; (defun c:qwe (/ ss blkCount)
+;   (vl-load-com)
+; ;   (setq ss (ssget "_X" '((0 . "INSERT") (2 . "~Title*") (410 . "Model"))));
+;   	(setq ss (ssget "_X" '((0 . "INSERT"))))
+; 	(princ "\nsiema")
+;     (progn
+;       (setq blkCount 0)
+;       (foreach ename (mapcar 'cadr (ssnamex ss))
+;         (setq blk (vlax-ename->vla-object ename))
+;         (if (eq :vlax-true (vla-get-HasAttributes blk))
+;           (setq blkCount (1+ blkCount))
+;         )
+;       )
+;       (princ blkCount)
+;       (cond
+;         ((= blkCount 1)
+;           (princ "1"))
+;         ((= blkCount 0)
+;           (princ "0 dddd"))
+;         (t
+;           (princ "Błąd - Znaleziono więcej niż jeden blok z atrybutami"))
+;       )
+;     )
+;     (princ)
+; )
+
+
+
+(defun c:RenameBlockToFileName ()
+  (vl-load-com)
+  (setq fileName (vl-filename-base (getvar "dwgname")))
+;   (setq blockName (vla-get-Name (vlax-ename->vla-object (car (entsel "\nWybierz blok: ")))))
+  (setq blockName "formatka")
+  (command "_rename" "_b" blockName fileName)
+  (alert (strcat "Nowa nazwa bloku: " fileName))
+  (princ)
+)
+
