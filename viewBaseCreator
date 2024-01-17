@@ -1,28 +1,62 @@
 
 (defun matchPaths ()
-	(setq filepath (getvar "dwgprefix"))
-	(setq fullPathString (read (strcat "("(vl-string-translate "\\" " "  filepath)")")))
-	(setq strList (mapcar 'vl-princ-to-string fullPathString))
-	
-	(setq listLength (1- (length strList)))
-	(setq matchedPaths '())
   
-	(while (<= 0 listLength)
-			(setq folderName (nth listLength strList)
-				  listLength (1- listLength))
-			(if (= folderName userFolderName)
-			(progn
+	(if (or (= userFolderName "c") (= userFolderName "C"))
+		(princ (list name))
+	(progn
+		(setq filepath (getvar "dwgprefix"))
+		(setq fullPathString (read (strcat "("(vl-string-translate "\\" " "  filepath)")")))
+		(setq strList (mapcar 'vl-princ-to-string fullPathString))
+		
+		(setq listLength (1- (length strList)))
+		(setq matchedPaths '())
+	
+		(while (<= 0 listLength)
+				(setq folderName (nth listLength strList)
+					listLength (1- listLength))
+				(if (= folderName userFolderName)
+				(progn
+					(setq matchedPaths (append matchedPaths (list folderName)))
+					(setq listLength -1))
 				(setq matchedPaths (append matchedPaths (list folderName)))
-				(setq listLength -1))
-			(setq matchedPaths (append matchedPaths (list folderName)))
-			)
-	)
-	(princ matchedPaths)
+				)
+		)
+		(princ matchedPaths)
+	);progn
+	);if
 )
 
 (defun filterNilFromList (lst)
   (vl-remove-if '(lambda (x) (= x nil)) lst)
 )
+
+(defun filterSameObjects (oldSs)
+
+  (setq oldList oldSs)
+  (setq newList '())
+  (setq namesList '())
+  
+(setq k (1- (sslength oldList)))
+(while (<= 0 k)
+  
+    (setq obj (ssname oldList k)
+		  name  (cdr(assoc 2 (entget obj)))
+		  k (1- k)
+	)
+      (if (= (member name namesList) nil)
+        (progn
+        (setq newList (append newList (list obj)))
+        (setq namesList (append namesList (list name)))  
+        )
+      )
+)
+	(setq newSs (ssadd))
+	(foreach newObj newList 
+		(ssadd newObj newSs)
+    )
+	(princ newSs)
+)
+
 (defun pointsGetter ( key lst )
 	(setq initPointsList (mapcar 'cdr
 		(vl-remove-if-not
@@ -81,7 +115,7 @@
 )
 
 (defun createSubElement ()
-	(command "_layout" "_c" "BLAT (2)" name)
+	(command "_layout" "_c" "TEMPLATE" name)
 	(setvar "clayout" name)
 		
 	(setvar "CLAYER" "RZUT")
@@ -159,7 +193,7 @@
   
 (setq viewBaseScale 0.15)
 (setq dimSpace 4)
-(setq tabName "BLAT (2)")
+(setq tabName "TEMPLATE")
 
 (setq userFolderName (getstring "\nPodaj nazwę zestawu komponentów"))
 ;store system variables
@@ -176,7 +210,6 @@
 (setvar "clayout" tabName)
 
 (entget  (ssname objects 0))
-(setq i (1- (sslength objects)))
   
 (setq name (vl-filename-base (getvar "dwgname")))
 (setq element objects)
@@ -191,9 +224,12 @@
   
 (renameTable)
   
+(setq filteredObjects (filterSameObjects objects))
+(setq i (1- (sslength filteredObjects)))
+  
   (if (> i 1)
 	(while (<= 0 i)
-		(setq e (ssname objects i)
+		(setq e (ssname filteredObjects i)
 		      name  (cdr(assoc 2 (entget e)))
 			  i (1- i)
 		)
