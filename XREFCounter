@@ -1,0 +1,42 @@
+(defun c:generatexreflist (/ xref-list)
+  (setq xref-list (list))
+  
+  (defun get-xref-hierarchy (xref indent)
+    (setq indent (1+ indent))
+    
+    (setq sub-xrefs (mapcar 'cdr (vlax-invoke xref 'GetBlockTable)))
+    
+    (foreach sub-xref sub-xrefs
+      (setq sub-xref-name (cdr (assoc 2 (entget sub-xref))))
+      (setq sub-xref-indent (apply 'strcat (make-list indent "\t")))
+      
+      (if (not (member sub-xref-name xref-list))
+        (progn
+          (setq xref-list (cons sub-xref-name xref-list))
+          (princ (strcat sub-xref-indent sub-xref-name "\n"))
+          (get-xref-hierarchy sub-xref indent))
+        )
+      )
+    )
+
+  (princ "Spis treści:\n")
+  
+  (setq main-xrefs (tblnext "BLOCK" (not nil)))
+  
+  (foreach xref main-xrefs
+    (setq xref-name (cdr (assoc 2 (tblsearch "BLOCK" (cdr (assoc 2 (entget xref)))))))
+
+    (if (not (member xref-name xref-list))
+      (progn
+        (setq xref-list (cons xref-name xref-list))
+        (princ (strcat xref-name "\n"))
+        (get-xref-hierarchy xref 0))
+      )
+    )
+  
+  (princ)
+  (princ "Koniec spisu treści.")
+  (princ)
+)
+
+(c:generatexreflist)
