@@ -1,0 +1,55 @@
+
+
+(vl-load-com)
+(defun rename_file ( old-filename new-filename / )
+  (if (findfile old-filename)
+    (vl-file-rename old-filename new-filename)
+  )
+)
+
+(defun reloadall nil
+   (vlax-for b (vla-get-blocks (vla-get-activedocument (vlax-get-acad-object)))
+       (if (eq :vlax-true (vla-get-isxref b)) (vla-reload b))
+   )
+   (princ)
+)
+
+;; change the name and path properties of the xref
+;; pattern: change all XREFS to (strcat main_dwg_name "_" xref_name)
+(defun repath2 (  / frm to path main_dwg objDefs)
+
+  (setq main_dwg (vl-filename-base (getvar "dwgname")))  ;; main dwg name, not including path or extension
+  (princ "\n")
+  (princ main_dwg)
+  (setq objDefs (vla-Get-Blocks (vla-Get-ActiveDocument (vlax-Get-Acad-Object))))
+  (vlax-for objDef objDefs
+    (if (= (vla-Get-IsXref objDef) :vlax-True)
+      (progn
+        (setq path (strcat (vl-Filename-Directory (vla-Get-Path objDef))))
+        (setq frm (vla-Get-Name objDef) )
+        (setq to (strcat main_dwg "_" frm ) )
+        
+        (rename_file
+          (strcat path "\\" frm ".dwg")
+          (strcat path "\\" to  ".dwg")
+        )
+        (princ (strcat "\nXREF file " frm " renamed to " to "\n" ) )
+        
+        ; (vla-Put-Path objDef (strcat path "\\" to ".dwg"))
+        (vla-Put-Name objDef to)
+        (princ (strcat "\nXREF properties " frm " changed to " to "\n" ) )
+
+      )
+    )
+  )
+)
+
+;; for Repath XRefS
+(defun c:rxrs ( /  )
+  (repath2)
+    ;;  reload xrefs
+  (reloadall)
+  (princ)
+)
+
+ 
