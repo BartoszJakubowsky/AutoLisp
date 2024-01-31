@@ -1,0 +1,164 @@
+(vl-load-com)
+(defun def_bulg_pl (ls lb flag_closed / ls lb rad a l_new)
+  (if (not (zerop flag_closed)) (setq ls (append ls (list (car ls)))))
+  (while (cadr ls)
+    (if (zerop (car lb))
+      (setq l_new (append l_new (list (car ls))))
+      (progn
+        (setq
+          rad (/ (distance (car ls) (cadr ls)) (sin (* 2.0 (atan (abs (car lb))))) 2.0)
+          a (- (/ pi 2.0) (- pi (* 2.0 (atan (abs (car lb))))))
+        )
+        (if (< a 0.0) (setq a (- (* 2.0 pi) a)))
+        (if (or (and (< (car lb) 0.0) (> (car lb) -1.0)) (> (car lb) 1.0))
+          (setq l_new (append l_new (reverse (cdr (reverse (bulge_pts (polar (car ls) (- (angle (car ls) (cadr ls)) a) rad) (car ls) (cadr ls) rad (car lb)))))))
+          (setq l_new (append l_new (reverse (cdr (reverse (bulge_pts (polar (car ls) (+ (angle (car ls) (cadr ls)) a) rad) (car ls) (cadr ls) rad (car lb)))))))
+        )
+      )
+    )
+    (setq ls (cdr ls) lb (cdr lb))
+  )
+  (append l_new (list (car ls)))
+)
+(defun bulge_pts (pt_cen pt_begin pt_end rad sens / inc ang nm p lst)
+  (setq
+    inc (angle pt_cen (if (< sens 0.0) pt_end pt_begin))
+    ang (+ (* 2.0 pi) (angle pt_cen (if (< sens 0.0) pt_begin pt_end)))
+    nm (1- (fix (/ (rem (- ang inc) (* 2.0 pi)) (/ (* pi 2.0) 36.0))))
+    lst (list (polar pt_cen inc rad))
+  )
+  (repeat nm
+    (setq
+      inc (+ inc (/ (* pi 2.0) 36.0))
+      p (polar pt_cen inc rad)
+      lst (append lst (list p))
+    )
+  )
+  (setq
+    p (polar pt_cen ang rad)
+    lst (append lst (list p))
+  )
+  (if (< sens 0.0) (reverse lst) lst)
+)
+(defun c:ConvertPolyTo3D ( / js AcDoc Space n ent dxf_ent name_layer col typl scl wl xd_l closed lst l_bulg nwent tbldef lst_data obj)
+  (princ "\nSelect the light polylines to convert to 3D: ")
+  (setq js
+    (ssget
+      (list
+        (cons 0 "LWPOLYLINE")
+        (cons 67 (if (eq (getvar "CVPORT") 2) 0 1))
+        (cons 410 (if (eq (getvar "CVPORT") 2) "Model" (getvar "CTAB")))
+      )
+    )
+  )
+  (cond
+    (js
+      (setq
+        AcDoc (vla-get-ActiveDocument (vlax-get-acad-object))
+        Space
+        (if (eq (getvar "CVPORT") 1)
+          (vla-get-PaperSpace AcDoc)
+          (vla-get-ModelSpace AcDoc)
+        )
+      )
+      (repeat (setq n (sslength js))
+        (setq
+          ent (ssname js (setq n (1- n)))
+          dxf_ent (entget ent '("*"))
+          name_layer (cdr (assoc 8 dxf_ent))
+          col (if (assoc 62 dxf_ent) (cdr (assoc 62 dxf_ent)) 256)
+          typl (if (assoc 6 dxf_ent) (cdr (assoc 6 dxf_ent)) "BYLAYER")
+          scl (if (assoc 48 dxf_ent) (cdr (assoc 48 dxf_ent)) 1.0)
+          wl (if (assoc 370 dxf_ent) (cdr (assoc 370 dxf_ent)) -1)
+          xd_l (assoc -3 dxf_ent)
+          closed (boole 1 (cdr (assoc 70 dxf_ent)) 1)
+          lst (mapcar '(lambda (x) (trans x ent 1)) (mapcar 'cdr (vl-remove-if '(lambda (x) (/= (car x) 10)) dxf_ent)))
+          l_bulg (mapcar 'cdr (vl-remove-if '(lambda (x) (/= (car x) 42)) dxf_ent))
+          lst (def_bulg_pl (mapcar '(lambda (x) (list (car x) (cadr x) (cdr (assoc 38 dxf_ent)))) lst) l_bulg closed)
+        )
+        (if
+          (or
+            (numberp (vl-string-search "Map 3D" (vla-get-caption (vlax-get-acad-object))))
+            (numberp (vl-string-search "Civil 3D" (vla-get-caption (vlax-get-acad-object))))
+          )
+          (progn
+            (cond
+              ((listp (ade_odgettables ent))
+                (foreach n_od (ade_odgettables ent)
+                  (setq tbldef (ade_odtabledefn n_od))
+                  (setq lst_data
+                    (cons
+                      (mapcar
+                        '(lambda (fld / tmp_rec numrec)
+                          (setq numrec (ade_odrecordqty ent n_od))
+                          (cons
+                            n_od
+                            (while (not (zerop numrec))
+                              (setq numrec (1- numrec))
+                              (if (zerop numrec)
+                                (if tmp_rec
+                                  (cons fld (list (cons (ade_odgetfield ent n_od fld numrec) tmp_rec)))
+                                  (cons fld (ade_odgetfield ent n_od fld numrec))
+                                )
+                                (setq tmp_rec (cons (ade_odgetfield ent n_od fld numrec) tmp_rec))
+                              )
+                            )
+                          )
+                        )
+                        (mapcar 'cdar (cdaddr tbldef))
+                      )
+                      lst_data
+                    )
+                  )
+                )
+              )
+              (T (setq lst_data nil))
+            )
+          )
+          (setq lst_data nil)
+        )
+        (if (not (zerop closed)) (setq lst (reverse (cdr (reverse lst)))))
+        (setq obj (vlax-invoke Space 'Add3dPoly (apply 'append lst)))
+        (vla-put-Closed obj closed)
+        (vla-put-Color obj col)
+        (vla-put-Linetype obj typl)
+        (vla-put-LinetypeScale obj scl)
+        (vla-put-Lineweight obj wl)
+        (setq nwent (entlast))
+        (if xd_l
+          (entmod (append (entget nwent) (list xd_l)))
+        )
+        (cond
+          (lst_data
+            (mapcar
+              '(lambda (x / ct)
+                (while (< (ade_odrecordqty nwent (caar x)) (ade_odrecordqty ent (caar x)))
+                  (ade_odaddrecord nwent (caar x))
+                )
+                (foreach el (mapcar 'cdr x)
+                  (if (listp (cdr el))
+                    (progn
+                      (setq ct -1)
+                      (mapcar
+                        '(lambda (y / )
+                          (ade_odsetfield nwent (caar x) (car el) (setq ct (1+ ct)) y)
+                        )
+                        (cadr el)
+                      )
+                    )
+                    (ade_odsetfield nwent (caar x) (car el) 0 (cdr el))
+                  )
+                )
+              )
+              lst_data
+            )
+            (setq lst_data nil)
+          )
+        )
+        (vla-put-Layer (vlax-ename->vla-object nwent) name_layer)
+        (entdel ent)
+      )
+    )
+  )
+  (prin1)
+)
