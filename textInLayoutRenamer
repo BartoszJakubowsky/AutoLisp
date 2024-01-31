@@ -1,0 +1,34 @@
+(defun c:NumerujRzutnie (/ object layer fileName layoutName allTextOnLayer)
+  (setq object (car (entsel "\nWskaż obiekt \n")))
+  (setq layer (cdr (assoc 8 (entget object))))
+  
+  (foreach layoutInDrawning (layoutlist)
+    (command "_layout" "_s" layoutInDrawning)
+    (setq fileName (substr (getvar "dwgname") 1 (- (strlen (getvar "dwgname")) 4))
+          layoutName (getvar "CTAB")
+          allTextOnLayer (ssget "_X" (list '(0 . "MTEXT") (cons 8 layer)))
+    )
+    
+    (princ layoutName)
+   
+    (cond (allTextOnLayer
+           (repeat (setq cnt (sslength allTextOnLayer))
+             (setq el (entget (ssname allTextOnLayer (setq cnt (1- cnt)))))
+             (if (= (cdr (assoc 410 el)) (getvar 'ctab))
+                 (progn
+                   (setq nt (strcat fileName "/" layoutName))
+                   (entmod (subst (cons 1 nt) (assoc 1 el) el))
+                ;    (prompt (strcat "\nZmieniono nazwę obiektu w bieżącej przestrzeni rysunku: " nt))
+                 )
+                ;  (prompt "\nObiekt nie jest w bieżącej przestrzeni rysunku.")
+               )
+           )
+           )
+          )
+    )
+  (princ "Koniec programu")
+  (princ)
+)
+
+
+; (while (tblsearch "BLOCK" (setq blk (strcat nm (itoa (setq i (1+ i)))))))
