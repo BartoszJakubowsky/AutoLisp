@@ -1,0 +1,56 @@
+https://github.com/vexx32/PSKoans
+SYS VAR
+- DELOBJ(does not remove parametrics when converting to 3D)
+- SELECTIONCYCLING (disables multiple choice) 2 on, 0 off
+- QPMODE (-1 disables fast properties, 1 enables it)
+
+LISP
+- Exp2Dxf from blocks_to_dxf
+
+FAST PROPERTIES
+ctrl+shitf+p - fast properties off
+
+estrude 
+prespull
+SUBTRACT
+UNION
+
+qleader - odnośnik bez tekstu
+mleader - odnośnik z tekstem
+_+viewport - linia rzutni / _mv
+_BATTMAN - SYNC ATRIBIUTES
+_attsync - synchronizacja
+_bed - solid edit
+_attdef - atribiute 
+_burst - remove all atribiutes from block
+_ucs _fa / pow- changes UCS
+_ucs _w - reset to default (world)
+
+CTRL+2 drawning properties (layout copies)
+_refedit - _bedit with drawning reference
+
+_convtosurface
+
+
+_DC - DRAWNING PROPERTIES (ctrl + 1)
+
+_layout - zarządzaiem layout
+
+selectsim...
+_qselect - wybieranie elementów poprzez...
+
+_qvlayout - podgląda layoutów
+
+
+_rotate - odniesienie - punkt srodkowy, dwa punkty odniesienia - dwa punkty odniesienia
+
+
+
+
+
+
+ctrl + alt + pgup/down moving layers
+https://help.autodesk.com/view/ACD/2023/ENU/?guid=GUID-A361F313-E1EB-400C-81B2-6B9AA2C0DDB7
+
+klasyczny:
+https://nolifestyle.com/klasyczny-obszar-roboczy-autocad/
