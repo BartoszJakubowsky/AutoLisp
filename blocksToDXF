@@ -1,0 +1,57 @@
+
+(defun KGA_Conv_Pickset_To_ObjectList  (ss / i ret)
+  (if ss
+    (repeat (setq i (sslength ss))
+      (setq ret (cons (vlax-ename->vla-object (ssname ss (setq i (1- i)))) ret))
+    )
+  )
+)
+
+(defun c:Exp2Dxf ( / doneLst fld fnm nme oldFormat ref spc ss)
+
+  (if
+    (and
+      (or
+        (= 1 (getvar 'dwgtitled))
+        (prompt "\nError: DWG must be saved first ")
+      )
+      (setq ss (ssget '((0 . "INSERT"))))
+    )
+    (progn
+      (setq oldFormat (getenv "DefaultFormatForSave")) ; https://www.cadforum.cz/cadforum_en/qaID.asp?tip=6439
+      (setq fld (strcat (getvar 'dwgprefix) (vl-filename-base (getvar 'dwgname)) "-Exported Blocks\\"))
+      (if (not (vl-file-directory-p fld))
+        (vl-mkdir fld)
+      )
+      (setq spc (vla-get-modelspace (vla-get-activedocument (vlax-get-acad-object))))
+      (foreach obj (KGA_Conv_Pickset_To_ObjectList ss)
+        (if (not (vl-position (strcase (setq nme (vla-get-effectivename obj))) doneLst))
+          (progn
+            (setq doneLst (cons (strcase nme) doneLst))
+            (setq ref (vla-insertblock spc (vlax-3d-point 0.0 0.0 0.0) nme 1.0 1.0 1.0 0.0))
+            (vla-put-layer ref "0")
+            (command "_.zoom" "_object" (vlax-vla-object->ename ref) "")
+            (setq fnm (strcat fld nme ".dxf"))
+            (vl-file-delete fnm) ; Delete existing file.
+            (command
+              "_.dxfout"
+              fnm ; Full path.
+              "_entities"
+              (vlax-vla-object->ename ref)
+              ""
+              "_version"
+              "2004"  ; Valid DXF version.
+              6       ; Accuracy
+            )
+            (vla-delete ref)
+          )
+        )
+      )
+      (setenv "DefaultFormatForSave" oldFormat)
+
+      (setq ct (length doneLst))
+      (prompt (strcat "\nNumber of blocks exported as DXF file - "(rtos ct 2 0)" "))
+    )
+  )
+  (princ)
+)
