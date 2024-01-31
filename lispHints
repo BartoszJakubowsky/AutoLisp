@@ -1,0 +1,411 @@
+- Pamiętaj, że nawet z entsel musisz wyciągać numerem z listy (np. car)
+- Jest różne od (if (/= a "cos"))
+- Pollinie w entnext
+- Obiekty mogę tworzyć komendami a mogę tworzyć ent listami:
+```
+(setq e '((0 . "LINE")(8 . "0")(10  50.0 50.0 0.0)(11 100.0 100.0 0.0)))
+(entmake e)
+```
+- (initcommandversion)
+# !
+Jeśli chce zwrócić jakąś wartość w command line, wpisać `!variable` i zwróci mi tą wartość
+# load
+`(load "testfunc")` załaduje do pamięci skypt lisp
+
+# car 
+zwraca pierwszy element listy
+
+# cdr 
+zwraca wszystkie oprócz pierwszego elementu listy
+
+# nth
+(ntf numer lista) - zwraca wskazany numer listy
+# radians
+Zwróci kąt w radianach
+```
+(defun dtr (x)
+	(* pi (/ x 180.0))
+)
+```
+
+# princ
+` (princ (strcat "\nLogged in at : " TIME1))`
+# system vars
+```
+(setq oldsnap (getvar "osmode"))
+	;********************************************************
+	
+	;Save System Variables
+ 
+	(setq oldsnap (getvar "osmode"))
+	;save snap settings
+ 
+	(setq oldblipmode (getvar "blipmode"))
+	;save blipmode setting
+ 
+;********************************************************
+	;Switch OFF System Variables
+ 
+	(setvar "osmode" 0)
+	;Switch OFF snap
+ 
+	(setvar "blipmode" 0)
+	;Switch OFF Blipmode
+	
+;********************************************************
+
+;Get Insertion Point
+	
+	(setvar "osmode" 32)
+	;switch ON snap
+	
+	(setq ip (getpoint "\nInsertion Point : "))
+	;get the insertion point
+	
+	(setvar "osmode" 0)
+	;switch OFF snap
+	
+;********************************************************
+
+;Reset System Variable
+ 
+	(setvar "osmode" oldsnap)
+	;Reset snap
+ 
+	(setvar "blipmode" oldblipmode)
+	;Reset blipmode
+```
+
+# (getfiled)
+The (getfiled) function will prompt the user for a file name using the standard AutoCAD file dialogue box. It will then return the file name either with the full path name or with the path name stripped.  
+The syntax of the (getfiled) function is as follows :
+
+# cond
+np. (if (/= a "cos")) -> jeśli a jest różne od
+# lista 
+jakieś tam append, itd
+
+# entsel
+One entity
+# entmod
+Nadpisuje entity list w pamięci
+
+
+# entget
+(setq b (entget a))
+
+Zwrca Entity Name np. w postaci:
+```
+((-1 . <Entity name: 2680880>) (0 . "LINE") (5 . "270")
+(100 . "AcDbEntity") (67 . 0) (8 . "0") (100 . "AcDbLine") 
+(10 400.378 621.82 0.0) (11 740.737 439.601 0.0) 
+(210 0.0 0.0 1.0))
+```
+
+# entnext
+Wybiera następny ent z ent list
+
+
+The `(cdr (car e))` returns the entity name of entity list e.
+```
+(setq e (entget (car (entsel))))
+(setq e1 (entget (entnext (cdr (car e)))))
+(setq e2 (entget (entnext (cdr (car e1)))))
+...
+(setq e5 (entget (entnext (cdr (car e4)))))
+```
+
+Co do pollini :
+e	(0 . "POLYLINE")
+e1	(0 . "VERTEX")
+e2	(0 . "VERTEX")
+e3	(0 . "VERTEX")
+e4	(0 . "VERTEX")
+e5	(0 . "SEQEND")
+
+Łatwiej jest to loopować
+
+# ssget
+Many entities
+
+Jego filtery
+1 - co:
+- "X" == wszystko
+- "P" == prefious 
+- "L" == last
+- "I" == implied
+2 - po znaku 'podaje assiocative codes np:
+- '((8 . "STEEL"))
+- '((0 . "CIRCLE")(8 . "STEEL"))
+
+np. `(setq sel1 (ssget "x" '((0 . "CIRCLE")(8 . "STEEL"))))`
+albo:
+```
+(prompt "\nSelect Objects by Window")
+	(setq p1 (getpoint "\nFirst Corner: "))
+	(setq p2 (getpoint p1 "\nSecond Corner: "))
+	(setq sel1 (ssget "w" p1 p2))
+```
+albo:
+`(setq sel1 (ssget '((-4 . "<OR")(8 . "STEEL")(8 . "PIPE")(-4 . "OR>"))))`
+
+albo:
+`(setq sel1 (ssget '(0 . "CIRCLE")(-4 . ">=")(40 . 2.0)))
+
+This would create a selection set of all CIRCLES with a RADIUS (group 40) of greater or equal to 2.0.
+
+lub :
+```
+(ssget '(
+   (-4 . "<or") 
+   (8 . "notes") (0 . "circle")
+   (-4 . "<and")
+   (8 . "s-boundary")(0 . "line")
+   (-4 . "and>")
+   (-4 . "or>")
+))
+```
+# ssadd
+adds entity to entities
+
+```
+(setq sel1 (ssget))
+	;create the first selection set
+ 
+	(setq ent (car (entsel))
+	;select an entity and use (car (ensel))
+	; to retrieve the entity name
+ 
+	(setq sel1 (ssadd ent sel1))
+	;add the entity to the selection set
+```
+
+
+# subtitute
+podmienia **nowy item** na miejsce **starego itema** we wskazanej **liście**
+3 parametry
+1 - nowy intem
+2 - stary item
+3 - lista, której kopia ma mieć zamieniony item 2 na item 1
+
+często łączy się z entmod, który zapisuje to w pamięci (czyli jeśli stary obiekt jest już w pamięci, nadpisuje go czyli np. zmienia jego warstwę)
+
+# Przykład dostania się do warstwy obiektu
+
+- Wybieram jeden entity (typ lista)
+`(setq oneEntity (entsel))`
+
+- Wyciąga za pomocą car pierwszy (i jedyny) entity z listy, i parsuje go przez entget
+`(setq object (entget (car a2)))`
+
+- Teraz mam dostęp do:
+```
+((-1 . <Nazwa elementu: 2d7bd8c5d80>) (0 . "INSERT") (330 . <Nazwa elementu: 2d79cd8a9f0>) (5 . "2A0") (100 . "AcDbEntity") (67 . 0) (410 . "Model") (8 . "0") (100 . "AcDbBlockReference") (2 . "A$C89e654ca") (10 1.46685e+07 5.76074e+06 0.0) (41 . 1.0) (42 . 1.0) (43 . 1.0) (50 . 0.0) (70 . 0) (71 . 0) (44 . 0.0) (45 . 0.0) (210 0.0 0.0 1.0))
+```
+
+- Wyciągnięcie warstwy to np. 
+`(setq warstwa (assoc 8 object))`
+
+
+# tablesearch
+W autocad jest 9 tablic entities obiects, które można loopować w poszukiwaniu czegoś
+
+|     Layer Table				<br>	Linetype Table				<br>	Named View Table			<br>	Text Style Table			<br>	Block Table				<br>	Named UCS Table				<br>	Named Application ID Table		<br>	Named Dimension Style Table		<br>	Vport Configuration Table		 | "LAYER"<br>"LTYPE"<br>"VIEW"<br>"STYLE"<br>"BLOCK"<br>"UCS"<br>"APPID"<br>"DIMSTYLE"<br>"VPORT" |
+| ---- | ---- |
+
+Np.:
+- Zaznaczam warstwę pod zmienną
+`(setq t (tblsearch "LAYER" "STEEL"))`
+- Jeśli istnieje zwróci
+`((0 . "LAYER") (2 . "STEEL") (70 . 64) (62 . 7) (6 . "CONTINOUS"))`
+- Jeśli nie ma zwrócil nil
+
+# table next
+pobiera następny element z danej tablicy
+można połączyć z while
+```
+(while (setq layer (tblnext "Layer" f))
+)
+```
+# dialog box
+```
+getlay  : dialog {				//dialog name
+ 
+        label = "Get Layer" ;			//give it a label
+ 
+ 
+	: popup_list {				//define list box
+ 
+        key = "sel1";				//give it a name
+ 
+	value = "0";				//initial value
+ 
+        }					//end list
+ 
+ 
+        ok_cancel ;				//predifined OK/Cancel
+ 
+     					
+}
+```
+
+# dialog box example
+```
+(defun c:getlay ( / NAMES SIZ1)
+;define funcion
+ 
+	(setvar "cmdecho" 0)
+	;switch off command echo
+ 
+ 	(setq siz1 "0")
+	;initiliase variable
+ 
+	(setq userclick T)
+	;set flag
+ 
+	(setq f 1)
+	;rewind pointer
+ 
+	(while
+	;start while loop
+ 
+ 	  (setq t1 (tblnext "Layer" f))
+	  ;get the next layer
+ 
+	  (setq f nil)
+	  ;reset pointer
+ 
+	  (setq b (cdr (assoc 2 t1)))
+	  ;get the layer name
+ 
+	    (if (/= b "DEFPOINTS")
+	    ;if name is not equal to DEFPOINTS
+ 
+	       (setq NAMES (append NAMES (list b)))
+	       ;Add the layer name to the list
+ 
+	    );if
+ 
+	);while
+ 
+ 
+	(setq dcl_id (load_dialog "getlay.dcl"))
+	;load dialogue
+ 
+	(if (not (new_dialog "getlay" dcl_id)
+	;check for errors
+ 
+	      );not
+ 
+	     (exit)
+	     ;if problem exit
+ 
+	);if
+  
+  (set_tile "sel1" "0")
+  ;initilise list box
+ 
+  (start_list "sel1")
+  ;start the list
+ 
+  (mapcar 'add_list NAMES)
+  ;add the layer names
+ 
+  (end_list)
+  ;end the list
+ 
+    (action_tile
+ 
+    "cancel"	
+ 
+    "(done_dialog) (setq userclick nil)"
+ 
+    );action_tile
+    ;if cancel set flag to nil
+ 
+  (action_tile
+ 
+    "accept"	
+ 
+    (strcat	
+ 
+      "(progn 
+ 
+        (setq SIZ1 (get_tile \"sel1\"))"	
+ 
+       " (done_dialog)(setq userclick T))"	
+ 
+    );strcat
+ 
+  );action tile
+  ;if OK get the layer selected
+ 
+  (start_dialog)	
+ 
+  (unload_dialog dcl_id)	
+ 
+   (if userclick	
+   ;if flag true
+ 
+    (progn
+ 
+     (setq SIZ1 (nth (atoi SIZ1) NAMES))
+     ;get the name of the layer from the list
+ 
+     (alert (strcat "\nYou Selected Layer  " SIZ1))
+     ;display the name
+ 
+    );end progn
+ 
+   );end if
+ 
+(princ)
+ 
+);defun C:getlay
+```
+
+# extended entity data
+==do nadrobienia==
+https://www.afralisp.net/autolisp/tutorials/extended-entity-data-part-1.php
+https://www.afralisp.net/autolisp/tutorials/extended-entity-data-part-2.php
+
+Extended Entity Data is attached to an entity as an associated list with a code number of -3. The simplest form of an Xdata Associative list would look something like this :
+
+	((-3 ("AFRALISP" (1000 . "Kenny is great"))))
+
+Firstly, let's look at some of the different types of xdata that you can attach to an entity
+![[Pasted image 20240111105322.png]]
+# mapcar
+Przelatuje przez każdy element listy
+(mapcar 'operacja lista)
+# lambda
+(lambda (a) (* pi (/ a 180.0)))
+
+# zapisywanie zmiennych w liście
+zamiast 
+```
+(setq "oldecho" (getvar "CMDECHO"))
+	(setq "oldhigh" (getvar "HIGHLIGHT"))
+	(setq "oldsnap" (getvar "OSMODE"))
+	(setq pt1 (getpoint "\Enter First Point : "))
+	(setq pt2 (getpoint "\Enter Second Point : "))
+	(setq thk (getdist "\Enter Thickness : "))
+	(setq qty (getint "\Enter Number Required : "))
+```
+
+```
+(setq AList (append (list (getvar "CMDECHO")) AList))
+	(setq AList (append (list (getvar "HIGHLIGHT")) AList))
+	(setq AList (append (list (getvar "OSMODE")) AList))
+	(setq AList (append (list (getpoint "\Enter First Point : ")) AList))
+	(setq AList (append (list (getpoint "\Enter Second Point : ")) AList))
+	(setq AList (append (list (getdist "\Enter Thickness : ")) AList))
+	(setq AList (append (list (getint "\Enter Number Required : ")) AList))
+```
+
+a wyciągam to poprzez 
+```
+(setvar "OSMODE" (cdr (assoc "OLDSNAP" AList)))
+```
+
+((-1 . <Nazwa elementu: 2938c754810>) (0 . ACDBASSOCDEPENDENCY) (330 . <Nazwa elementu: 293f041c760>) (5 . 10A99) (100 . AcDbAssocDependency) (90 . 2) (90 . 0) (290 . 1) (290 . 1) (290 . 1) (290 . 1) (90 . 0) (330 . <Nazwa elementu: 293f041c730>) (290 . 0) (330 . <Nazwa elementu: 0>) (330 . <Nazwa elementu: 0>) (360 . <Nazwa elementu: 0>) (90 . 1))((-1 . <Nazwa elementu: 293f041c030>) (0 . BLOCK_RECORD) (5 . 10A23) (102 . {ACAD_XDICTIONARY) (360 . <Nazwa elementu: 293f041c040>) (102 . }) (330 . <Nazwa elementu: 293e80fd010>) (100 . AcDbSymbolTableRecord) (100 . AcDbBlockTableRecord) (2 . *Paper_Space) (360 . <Nazwa elementu: 293f041c050>) (340 . <Nazwa elementu: 293f041c270>) (70 . 0) (280 . 1) (281 . 0))((-1 . <Nazwa elementu: 293f041c690>) (0 . VIEWPORT) (330 . <Nazwa elementu: 293f041c030>) (5 . 10A89) (100 . AcDbEntity) (67 . 1) (410 . BLAT_PRODUKCJA.dwg) (8 . RZUT) (60 . 1) (100 . AcDbViewport) (10 200.0 215.249 0.0) (40 . 125.305) (41 . 78.7661) (68 . 2) (69 . 3) (12 -8.52651e-14 -2.84217e-13 0.0) (13 0.0 0.0 0.0) (14 10.0 10.0 0.0) (15 10.0 10.0 0.0) (16 0.57735 -0.57735 0.57735) (17 -9539.95 -9484.75 15.0) (42 . 50.0) (43 . 0.0) (44 . 0.0) (45 . 525.107) (50 . 0.0) (51 . 0.0) (72 . 1000) (90 . 835840) (1 . ) (281 . 0) (71 . 1) (74 . 1) (110 -9539.95 -9484.75 15.0) (111 0.707107 0.707107 -2.05819e-16) (112 -0.408248 0.408248 0.816497) (79 . 0) (146 . 0.0) (170 . 0) (61 . 5) (348 . <Nazwa elementu: 293e80fd650>) (292 . 1) (282 . 1) (141 . 0.0) (142 . 0.0) (63 . 250) (421 . 3355443))((-1 . <Nazwa elementu: 293f041c690>) (0 . "VIEWPORT") (330 . <Nazwa elementu: 293f041c030>) (5 . "10A89") (100 . "AcDbEntity") (67 . 1) (410 . "BLAT_PRODUKCJA.dwg") (8 . "RZUT") (60 . 1) (100 . "AcDbViewport") (10 200.0 215.249 0.0) (40 . 125.305) (41 . 78.7661) (68 . 2) (69 . 3) (12 -8.52651e-14 -2.84217e-13 0.0) (13 0.0 0.0 0.0) (14 10.0 10.0 0.0) (15 10.0 10.0 0.0) (16 0.57735 -0.57735 0.57735) (17 -9539.95 -9484.75 15.0) (42 . 50.0) (43 . 0.0) (44 . 0.0) (45 . 525.107) (50 . 0.0) (51 . 0.0) (72 . 1000) (90 . 835840) (1 . "") (281 . 0) (71 . 1) (74 . 1) (110 -9539.95 -9484.75 15.0) (111 0.707107 0.707107 -2.05819e-16) (112 -0.408248 0.408248 0.816497) (79 . 0) (146 . 0.0) (170 . 0) (61 . 5) (348 . <Nazwa elementu: 293e80fd650>) (292 . 1) (282 . 1) (141 . 0.0) (142 . 0.0) (63 . 250) (421 . 3355443))
