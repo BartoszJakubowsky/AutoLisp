@@ -25,7 +25,7 @@ _attdef - atribiute
 _burst - remove all atribiutes from block
 _ucs _fa / pow- changes UCS
 _ucs _w - reset to default (world)
-
+_purge - deletes all unused elements
 CTRL+2 drawning properties (layout copies)
 _refedit - _bedit with drawning reference
 
