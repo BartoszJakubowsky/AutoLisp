@@ -24,6 +24,7 @@
   (setq xlsFiberMainName 6)
   (setq xlsFiberSecondName 7)
   
+
   
 (defun createCordPoint (x y)
   (setq cords (list x y 0.0))
@@ -45,7 +46,7 @@
     )
   )
   
-	(setvar "clayer" "SŁUP")
+	(setvar "clayer" "SLUP")
 	(setq poleCenter (list cordX cordY 0.0))
   
 	; (command "_circle" poleCenter polesIconSize "") 
@@ -57,20 +58,29 @@
 	; (setq textFirstCord (list cordX (+ cordY halfOfIconSize) 0.0))
 	; (command "_-text" "_j" "dc" textFirstCord polesTextSize 0 poleName "")
   
-  	(command "_insert" "SŁUP" poleCenter "1" "1" "0")
+  	(command "_insert" "SLUP" poleCenter "1" "1" "0")
 	(setq vla-blk (vlax-ename->vla-object (entlast)))
 	
-	(editAtt vla-blk "TYP_SŁUPA" poleName)
+	(editAtt vla-blk "TYP_SLUPA" poleName)
 	(editAtt vla-blk "NUMER" poleNumber)
   
   	(switchDefaultSystemVars T)
 )
 
-(defun drawLine (firstCordX firstCordY secondCordX secondCordY)
+(defun drawLine (firstCordX firstCordY secondCordX secondCordY fiberMain fiberSecond)
 	(setq firstCords (list firstCordX firstCordY 0.0))
 	(setq secondCords (list secondCordX secondCordY 0.0))
-	(setvar "clayer" "ADSS_M")
+	
+	(setvar "clayer" "LINIA_NN")
 	(command "_line" firstCords secondCords "")
+	
+	(if (and (not (equal fiberMain "")) (not (equal fiberSecond "")))
+		(progn
+			(setvar "clayer" "ADSS_M")
+			(command "_line" firstCords secondCords "")
+        )
+    )
+	
   	(switchDefaultSystemVars T)
 )
   
@@ -129,8 +139,8 @@
     (if (not (equal  No. ""))
     
 		;if this pole is already in the pool
-		;it means it's crossrad for line 
-		;and this pole is already drowned
+		;it means it's crossroad for line 
+		;and this pole is already drawn
 		;so set is as previous one and skip to next row
 		(if (member No. usedPolesList)
 			(setq previousPole pole)
@@ -159,7 +169,7 @@
 						(setq fiberMainName (nth xlsFiberMainName pole))
 						(setq fiberSecondName (nth xlsFiberSecondName pole))
 
-						(drawLine cordX cordY previousCordX previousCordY)
+						(drawLine cordX cordY previousCordX previousCordY fiberMainName fiberSecondName)
 						(drawDimensionDescription cordX cordY previousCordX previousCordY fiberMainName fiberSecondName electricName)
        				;draw a line beetwen them
 					;and so on -> dimensions, etc.
@@ -193,33 +203,6 @@
   (princ)
 )
 
-
-;line - codes
-;10 and 11 cords 
-;8 layer
-
-;dimension - codes
-; 1. name first main adss then second adss as optional then electric
-; 13 and 14 cords
-; 8 layer
-; 42 dimension
-
-
-; if one main line it's automaticly main
-; if two main lines it's randomly set's the main one
-; if there's couple of mains ones it should chceck
-	; if angle beetwen two of them is not in range 170 - 180 degrees
-	; if not, check for the same electrical line
-	; if not, set randomly lg1, rest for lg2
-
-; set main
-; calculate angles
-; put data into calculator
-
-
-; in near future -> 
-; if wrong calculations save calculated files as "error - pole num"
-; copy data based on pole type 
 
 
 
