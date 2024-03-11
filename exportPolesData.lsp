@@ -1,6 +1,6 @@
 (defun c:ExportPolesData () 
   
-(setq poleLayer "SŁUP")  
+(setq poleLayer "SLUP")  
 (setq fiberMainLayer "OPIS_M")  
 (setq fiberSecondLayer "OPIS_A")  
 ; (setq dimLayer "WYMIAR")  
@@ -25,103 +25,79 @@
 (defun exportToExcel ()
   ;one pole takes 4 rows
   (setq alphabet '("A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "R" "S"))
-  (OpenExcel "C:\\Users\\BFS\\Documents\\empty2.xlsx" "Arkusz1" nil)
+  (OpenExcel "C:\\Users\\BFS\\Documents\\empty.xlsx" "Arkusz1" nil)
   (setq rowCounter 1)
   (setq columnCounter 1)
   (setq nextRow 0)
   
   (foreach poleFromLst dataForExcel
+	
     (foreach pole poleFromLst
-      (setq cell (strcat (nth (- columnCounter 1) alphabet) (itoa rowCounter)))
-   
-          	(foreach elementInPole pole
-				(setq cell (strcat (nth (- columnCounter 1) alphabet) (itoa (+ rowCounter nextRow))))
-				(PutCell cell (list elementInPole))
-				(setq nextRow (1+ nextRow))
-        	)
-	    	(setq nextRow rowCounter)
-	    	(setq nextRow (1- nextRow))
+      	; (setq cell (strcat (nth (- columnCounter 1) alphabet) (itoa rowCounter)))
+
+		(foreach elementInPole pole
+		(setq cell (strcat (nth (- columnCounter 1) alphabet) (itoa (+ rowCounter nextRow))))
+			(PutCell cell (list elementInPole))
+			(setq nextRow (1+ nextRow))
+
+		)
+      (setq nextRow 1)
+      (setq nextRow (1- nextRow))
 	  (setq columnCounter (1+ columnCounter))
+
     )
     (setq rowCounter (+ 4 rowCounter))	
-  	(setq columnCounter 0)
+  	(setq columnCounter 1)
   )
-(CloseExcel "C:\\Users\\BFS\\Documents\\empty3.xlsx")
+(CloseExcel "C:\\Users\\BFS\\Documents\\polesData.xlsx")
   
-  (princ "wirtually exported")
+  (princ "\nexported\n")
 )
   
 (defun handleEntity (entity blk)
 	(setq layer (getValue 8 entity))
 	(setq export nil)
+  
 	(if (equal layer poleLayer) (setq export (handlePole entity blk)))
 	(if (equal layer fiberMainLayer) (setq export (handleFiber entity "m")))
 	(if (equal layer fiberSecondLayer) (setq export (handleFiber entity "a")))
   
-	(princ export)
+	(progn export)
 )
 
 (defun handlePole (e blk)
   (setq cords (getValue 10 e))
   (setq attr (getAllAttValues blk))
-  
-  (setq attPoleType (getValue "TYP_SŁUPA" attr))
+
+  (setq attPoleType (getValue "TYP_SLUPA" attr))
   (setq attPoleNumber (getValue "NUMER" attr))
-  (setq attrForExport (list attPoleType attPoleNumber))
-  
-  (princ (list "p" attrForExport cords ))
+  (setq attPoleFunction (getValue "FUNKCJA" attr))
+  (setq attPoleStation (getValue "STACJA" attr))
+  (setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation))
+
+
+
+  (progn (list "p" attrForExport cords ))
 )  
-  
 (defun handleFiber (e fiberType) 
   (setq name (trimName (getValue 1 e)))
 	;(setq lng (getValue 42 e))
   (setq x (getValue 13 e))
   (setq y (getValue 14 e))
-  
+
   (setq fiberLst (list fiberType name x y))
-  (princ fiberLst)		
+  (progn fiberLst)		
 )
-  
 (defun trimName (string)
 	(setq refactoredString (vl-string-subst "-" "\n" string)) 
 	(setq trimmedString (vl-string-trim " " refactoredString)) 
-	(princ trimmedString)
-)
-  
+	(progn trimmedString)
+) 
 (defun getValue (num entity)
-	(princ (cdr (assoc num entity)))
+	(progn (cdr (assoc num entity)))
 )
-
 (defun getAllAttValues ( blk )
 	(mapcar '(lambda ( att ) (cons (vla-get-tagstring att) (vla-get-textstring att))) (vlax-invoke blk 'getattributes))
-)
-  
-(defun iterateSSData (s)
-	
-	;data for single pole
-	(setq iteratedDataForExcel '())
-	(progn
-		(setq i 0)
-		(repeat (sslength s)
-			(setq ssobj (ssname s i)
-					entity (entget ssobj)
-					vla-obj (vlax-ename->vla-object ssobj)
-					i (1+ i)
-			)
-			(setq localDataForExcel (handleEntity entity vla-obj))
-    
-			(if (not (equal localDataForExcel nil))
-				(progn
-      				(setq iteratedDataForExcel (cons localDataForExcel iteratedDataForExcel))
-                )
-            )
-			(princ "\n")
-			(princ i)
-		)
-    )
-	(setq dataForExcel (cons iteratedDataForExcel dataForExcel))
-	(setq dataForExcel (cons iteratedDataForExcel dataForExcel))
-  
 )
 (defun fs ( ss / ssxunlocked ss i e sss)
  (defun ssxunlocked (/ filter elst ss)
@@ -156,29 +132,56 @@
 	(fastsel e)
 	)
 	;  (sssetfirst nil sss)
-	(princ sss)
+	(progn sss)
 )
+(defun iterateSSData (s)
 
-(defun fastselForDataExport ()
-  (setq x (ssget "_A" '((8 . "SŁUP"))))
-  
-  (progn
+	;data for single pole
+	(setq iteratedDataForExcel '())
+	(progn
 		(setq i 0)
-		(repeat (sslength x)
-			(setq ssobj (ssname x i)
+		(repeat (sslength s)
+			(setq ssobj (ssname s i)
 					entity (entget ssobj)
 					vla-obj (vlax-ename->vla-object ssobj)
 					i (1+ i)
 			)
-		;each data is separate pole with
-		;objects in contract with it
-		(iterateSSData (fs x))
+    
+			(setq localDataForExcel (handleEntity entity vla-obj))
+			(if (not (equal localDataForExcel nil))
+				(progn
+      				(setq iteratedDataForExcel (cons localDataForExcel iteratedDataForExcel))
+                )
+            )
+		)
+    )
+
+	(setq dataForExcel (cons iteratedDataForExcel dataForExcel))
+	
+)
+
+(defun fastselForDataExport ()
+  (setq allPolesFromDrawning (ssget "_A" '((8 . "SLUP"))))
+  
+  (progn
+		(setq j 0)
+		(repeat (sslength allPolesFromDrawning)
+			(setq ent (ssname allPolesFromDrawning j)
+					j (1+ j)
+			)
+
+		(setq sel (ssadd))
+		(setq sel (ssadd ent sel))
+			;each data is separate pole with
+			;objects in contract with it
+			
+			(iterateSSData (fs sel))
 		)
     )
 )
 
-  (iterateSSData (ssget))
-; (fastselForDataExport)
+; (iterateSSData (ssget))
+(fastselForDataExport)
 (exportToExcel)
   
 (princ)
