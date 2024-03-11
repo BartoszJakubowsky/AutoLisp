@@ -10,19 +10,22 @@
   (setq OLDLAYER (getvar "CLAYER"))
 ;   (setq OLDLIGHT (getvar "HIGHLIGHT"))
   
-  (setq polesIconSize 5)
-  (setq polesTextSize 2.5)
-  (setq polesTextSpace (+ polesIconSize 1))
-  (setq dimTextSpace 2)
+;   (setq polesIconSize 5)
+;   (setq polesTextSpace (+ polesIconSize 1))
+;   (setq polesTextSize 2.5)
+  (setq dimTextSpace 8)
   (setq dimSpace 6)
   
   (setq xlsPoleName 1)
   (setq xlsPoleNumber 2)
-  (setq xlsElectricName 3)
-  (setq xlsCordX 4)
-  (setq xlsCordy 5)
-  (setq xlsFiberMainName 6)
-  (setq xlsFiberSecondName 7)
+  (setq xlsPoleFunction 3)
+  (setq xlsPoleStation 4)
+  
+  (setq xlsElectricName 5)
+  (setq xlsCordX 6)
+  (setq xlsCordy 7)
+  (setq xlsFiberMainName 8)
+  (setq xlsFiberSecondName 9)
   
 
   
@@ -31,7 +34,7 @@
   (princ cords)
 )
   
-(defun drawPole (cordX cordY poleName poleNumber)
+(defun drawPole (cordX cordY poleName poleNumber poleFunction poleStation)
   
   
   (defun editAtt( blk tag val )
@@ -63,6 +66,8 @@
 	
 	(editAtt vla-blk "TYP_SLUPA" poleName)
 	(editAtt vla-blk "NUMER" poleNumber)
+	(editAtt vla-blk "FUNKCJA" poleFunction)
+	(editAtt vla-blk "STACJA" poleStation)
   
   	(switchDefaultSystemVars T)
 )
@@ -108,29 +113,34 @@
   
   (switchDefaultSystemVars T)
 )
-
-  
 ; T - set default, nil - set user's previous set
 (defun switchDefaultSystemVars (onOff)
-(if (equal onOff T)
-	(progn
-		(setvar "OSMODE" 0)
-		(setvar "CMDECHO" 0)
-		(setvar "BLIPMODE" 0)
-		(setvar "clayer" "0")
+	(if (equal onOff T)
+		(progn
+			(setvar "OSMODE" 0)
+			(setvar "CMDECHO" 0)
+			(setvar "BLIPMODE" 0)
+			(setvar "clayer" "0")
+		)
+		(progn
+			(setvar "OSMODE" OLDSNAP)
+			(setvar "CMDECHO" OLDCMDECHO)
+			(setvar "BLIPMODE" OLDBLIP)
+			(setvar "clayer" OLDLAYER)
+		)
 	)
-	(progn
-		(setvar "OSMODE" OLDSNAP)
-		(setvar "CMDECHO" OLDCMDECHO)
-		(setvar "BLIPMODE" OLDBLIP)
-		(setvar "clayer" OLDLAYER)
-	)
-)
 )
   
 (switchDefaultSystemVars T)
-
+  
+  
+(setq firstRow T)
 (foreach pole polesList
+  
+(if (equal firstRow T)
+	(setq firstRow nil)
+	(progn
+   
 	
     (setq No. (car pole))
   
@@ -148,12 +158,15 @@
 			;if this pole wasn't draw previous time, do it now
 			;creates and draws a pole 
 			(progn
-
+			
 				(setq cordX (atof (nth xlsCordX pole)))
 				(setq cordY (atof (nth xlsCordY pole)))
 				(setq poleName  (nth xlsPoleName pole))
 				(setq poleNumber (nth xlsPoleNumber pole))
-				(drawPole cordX cordY poleName poleNumber)
+				(setq poleFunction (nth xlsPoleFunction pole))
+				(setq poleStation (nth xlsPoleStation pole))
+     
+				(drawPole cordX cordY poleName poleNumber poleFunction poleStation)
 
 				;core of the code
 				;if this is not first pole (beggining of the line)
@@ -172,7 +185,7 @@
 						(drawLine cordX cordY previousCordX previousCordY fiberMainName fiberSecondName)
 						(drawDimensionDescription cordX cordY previousCordX previousCordY fiberMainName fiberSecondName electricName)
        				;draw a line beetwen them
-					;and so on -> dimensions, etc.
+					;and so on -> dimensions, etc.	
 					)
 				); if this is the first pole, do nothing
 
@@ -196,6 +209,7 @@
 		(setq previousPole "")
     ) ;first if
 	;do nothing outside if
+  ))
   )
   
   (CloseExcel nil)
