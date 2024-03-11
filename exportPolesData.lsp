@@ -58,6 +58,7 @@
 	(setq layer (getValue 8 entity))
 	(setq export nil)
   
+
 	(if (equal layer poleLayer) (setq export (handlePole entity blk)))
 	(if (equal layer fiberMainLayer) (setq export (handleFiber entity "m")))
 	(if (equal layer fiberSecondLayer) (setq export (handleFiber entity "a")))
@@ -191,3 +192,11 @@
 
 
 
+	(defun getdynprops ( blk )
+		(mapcar '(lambda ( x ) (cons (vla-get-propertyname x) (vlax-get x 'value)))
+			(vlax-invoke blk 'getdynamicblockproperties)
+		)
+	)
+
+
+; (command "_rotate" x "" (list 271369.4587 556847.1665) (list 271365.7758 556857.2299) "")
