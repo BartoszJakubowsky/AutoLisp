@@ -1,0 +1,46 @@
+(defun c:clp ()
+  
+  (setq excelPlotList (GetExcel "C:\\Users\\BFS\\Documents\\Zestawienie działek.xlsx" "Arkusz1" nil))
+  (setq objList (ssget (list (cons 0 "TEXT,MTEXT") (cons 8 "Numery_dzialek"))))  
+  
+  (setq plotList '())
+  
+  (foreach plot excelPlotList
+    (setq strPlot (car plot))
+	(setq plotList (cons strPlot plotList))
+  )
+  
+	; (if (not (tblsearch "layer" "ARKUSZ_DZIAŁKI")) 
+	; 	(command "_.layer" "t" "c_gen_symbol" "m" "c_gen_symbol" "c" "80" "" "")
+	; 	(command "_-layer" "_m" "#nazwa_warswy" "_c" "_red" "" "")
+	; )
+  
+  (if objList
+    (progn
+      (setq i 0)
+      (repeat (sslength objList)
+        (setq obj (ssname objList i))
+		(setq entObj (entget obj))
+        (setq plotName (cdr (assoc 1 entObj)))
+        
+        (if (member plotName plotList)
+          (progn
+			(setq plotName (vl-string-subst "_" "/" plotName))
+
+			(command "_layout" "_c" "A3" plotName)
+			(setvar "ctab" plotName)
+
+			(command "_mspace")
+			(command "_zoom" "_o" obj "")
+			(command "_zoom" "_s" "10/77") ;(1:10) ;10/77
+			(command "_pspace")
+          )
+        )
+        
+      	(setq i (1+ i))
+      )
+    )
+  )	
+  (CloseExcel nil)
+  (princ)
+)
