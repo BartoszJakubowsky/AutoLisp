@@ -34,41 +34,72 @@
   (princ cords)
 )
   
+(defun getValue (num entity)
+	(progn (cdr (assoc num entity)))
+)
+  
 (defun drawPole (cordX cordY poleName poleNumber poleFunction poleStation)
   
   
-  (defun editAtt( blk tag val )
-    (setq tag (strcase tag))
-    (vl-some
-       '(lambda ( att )
-            (if (= tag (strcase (vla-get-tagstring att)))
-                (progn (vla-put-textstring att val) val)
-            )
-        )
-        (vlax-invoke blk 'getattributes)
-    )
-  )
-  
-	(setvar "clayer" "SLUP")
-	(setq poleCenter (list cordX cordY 0.0))
-  
-	; (command "_circle" poleCenter polesIconSize "") 
-	; (setq poleEntity (entget (entlast)))
-	; (setq poleCenter (cdr (assoc 10 poleEntity)))
+	(defun editAtt( blk tag val )
+		(setq tag (strcase tag))
+		(vl-some
+		'(lambda ( att )
+				(if (= tag (strcase (vla-get-tagstring att)))
+					(progn (vla-put-textstring att val) val)
+				)
+			)
+			(vlax-invoke blk 'getattributes)
+		)
+	)
 
-	; (setq halfOfIconSize (/ polesIconSize 2)) 
-	; (setq halfOfIconSize polesIconSize) 
-	; (setq textFirstCord (list cordX (+ cordY halfOfIconSize) 0.0))
-	; (command "_-text" "_j" "dc" textFirstCord polesTextSize 0 poleName "")
+	(defun getAllAttValues ( blk )
+		(mapcar '(lambda ( att ) (cons (vla-get-tagstring att) 	(vla-get-textstring att))) (vlax-invoke blk 'getattributes))
+	)
   
-  	(command "_insert" "SLUP" poleCenter "1" "1" "0")
-	(setq vla-blk (vlax-ename->vla-object (entlast)))
+	(defun checkIfPoleAlreadyExist ()
+		(setq allPolesBlockInDrawning (ssget "_A" '((8 . "SLUP"))))
+		(setq ii 0)
+		(setq searchedPole nil)
+		(repeat (sslength allPolesBlockInDrawning)
+			(setq ssobj (ssname allPolesBlockInDrawning ii))
+			(setq blk (vlax-ename->vla-object ssobj))
+			(setq ii (1+ ii))
 	
+			(setq attr (getAllAttValues blk))
+			(setq attPoleNumber (getValue "NUMER" attr))
+
+			(if (not (equal (type attPoleNumber) str))
+				(setq attPoleNumber (rtos attPoleNumber))
+            )
+			(if (not (equal (type poleNumber) str))
+				(setq poleNumber (rtos poleNumber))
+			)
+
+			(if (equal attPoleNumber poleNumber)
+				(setq searchedPole blk)
+			)
+		)
+		(progn searchedPole)
+    )
+
+	(setq vla-blk (checkIfPoleAlreadyExist))
+	
+	(if (not vla-blk)
+		;pole needs to be created from scratch
+		(progn
+			(setvar "clayer" "SLUP")
+			(setq poleCenter (list cordX cordY 0.0))
+
+			(command "_insert" "SLUP" poleCenter "1" "1" "0")
+			(setq vla-blk (vlax-ename->vla-object (entlast)))
+
+			(editAtt vla-blk "NUMER" poleNumber)
+        )
+    )
 	(editAtt vla-blk "TYP_SLUPA" poleName)
-	(editAtt vla-blk "NUMER" poleNumber)
 	(editAtt vla-blk "FUNKCJA" poleFunction)
 	(editAtt vla-blk "STACJA" poleStation)
-  
   	(switchDefaultSystemVars T)
 )
 
