@@ -120,7 +120,7 @@
 	(setq allText (ssget "_A" (list (cons 0 "TEXT,MTEXT") (cons 8 TARGETLAYER))))  
 	
 	(setq j 0)
-  	(setq number nil)
+  	(setq number "")
   	(setq lowestDistance 20.0)
 	(repeat (sslength allText)
 		(setq entity (entget (ssname allText j)))
