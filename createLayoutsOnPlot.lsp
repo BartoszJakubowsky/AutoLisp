@@ -12,23 +12,24 @@
   
 (setq excelPlotPath (getfiled "Wybierz excel z zestawieniem działek" "c:/Documents/" "xlsx" 2))	
 (setq excelPlotList (GetExcel excelPlotPath "Arkusz1" nil))
+(OpenExcel excelPlotPath "Arkusz1" nil)
   
 (defun getValue (num entity)
-(progn (cdr (assoc num entity)))
+  (progn (cdr (assoc num entity)))
 )
 (defun switchDefaultSystemVars (onOff)
-(if (equal onOff T)
-	(progn
-		(setvar "OSMODE" 0)
-		(setvar "CMDECHO" 0)
-		(setvar "BLIPMODE" 0)
-	)
-	(progn
-		(setvar "OSMODE" OLDSNAP)
-		(setvar "CMDECHO" OLDCMDECHO)
-		(setvar "BLIPMODE" OLDBLIP)
-	)
-)
+  (if (equal onOff T)
+    (progn
+      (setvar "OSMODE" 0)
+      (setvar "CMDECHO" 0)
+      (setvar "BLIPMODE" 0)
+    )
+    (progn
+      (setvar "OSMODE" OLDSNAP)
+      (setvar "CMDECHO" OLDCMDECHO)
+      (setvar "BLIPMODE" OLDBLIP)
+    )
+  )
 )
 (setq objList (ssget (list (cons 0 "TEXT,MTEXT") (cons 8 "Numery_dzialek"))))  
 (setq plotList '())
@@ -72,7 +73,7 @@
   (switchDefaultSystemVars nil)
 )
   
-(defun findSamePlotsNumbers (plotName)
+(defun findPrivatePlotsNumbers (plotName)
 	(setq k 0)
 	(setq privateLength 0)
 	(repeat (sslength objList)
@@ -102,9 +103,28 @@
 	)
 )
 
+(defun findAllPlotNumbers ()
+  (setq localAllPlotNumbers 0)
+  (foreach allPlot plotList
+	  (setq k 0)
+    (repeat (sslength objList)
+      (setq allObj (ssname objList k))
+      (setq entAllObj (entget allObj))
+      (setq allPlotName (getValue 1 entAllObj))
+      (if (equal allPlot allPlotName)
+        (setq localAllPlotNumbers (1+ localAllPlotNumbers))
+      )
+		  (setq k (1+ k))
+    )
+  )
+  (progn localAllPlotNumbers)
+)
+
+(setq allPlotNumbers (findAllPlotNumbers))
 (if objList
 	(progn
 		(setq plotNumber 0)
+    (setq plotExcelRow 0)
 		(foreach plot plotList
 			(setq privatePlotNumber 0)
 			(setq i 0)
@@ -112,11 +132,6 @@
 				(setq obj (ssname objList i))
 				(setq entObj (entget obj))
 				(setq plotName (getValue 1 entObj))
-     
-				; (if (equal '(0 0 0) (getValue 11 entObj))
-				; 	(setq centerCoords (getValue 10 entObj))
-				; 	(setq centerCoords (getValue 11 entObj))
-                ; )
 				(setq centerCoords (getValue 10 entObj))
 
 				(if (equal plot plotName)
@@ -144,18 +159,25 @@
                         )
 						(command "_pspace")
 						(if plotOwner
-							(handleTable (itoa plotNumber) (itoa (sslength objList)))
-							(handleTable (itoa privatePlotNumber) (itoa (findSamePlotsNumbers plotName)))
-                        )
+							(handleTable (itoa plotNumber) (itoa allPlotNumbers))
+							(handleTable (itoa privatePlotNumber) (itoa (findPrivatePlotsNumbers plotName)))
+            )
+          ;saves which plot belongs to which layout
+          ; (setq cell (strcat "D" (itoa plotNumber)))
+          ; (setq layoutsList (list (GetCell cell)))
+          ; (if (not layoutsList)
+          ;   (setq layoutsList '())
+          ; )
+				  ; (setq layoutsList (cons (itoa plotNumber) layoutsList))
+          
+          ; (PutCell cell layoutsList)
 					)
 				)
 				(setq i (1+ i))
 			)
 		)
 )
-  
 )
-
   (CloseExcel nil)
   (princ)
 )
