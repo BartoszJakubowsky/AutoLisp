@@ -3,6 +3,9 @@
 (setq poleLayer "SLUP")  
 (setq fiberMainLayer "OPIS_M")  
 (setq fiberSecondLayer "OPIS_A")  
+(setq docsPath (strcat (getenv "USERPROFILE") "\\Documents"))
+(setq emptyExcelPath (strcat docsPath "\\empty.xlsx"))
+(setq finalExcelPath (strcat docsPath "\\WYCIĄG_SŁUPÓW.xlsx"))
 ; (setq dimLayer "WYMIAR")  
 
 ;data for all poles
@@ -25,7 +28,7 @@
 (defun exportToExcel ()
   ;one pole takes 4 rows
   (setq alphabet '("A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "R" "S"))
-  (OpenExcel "C:\\Users\\BFS\\Documents\\empty.xlsx" "Arkusz1" nil)
+  (OpenExcel emptyExcelPath "Arkusz1" nil)
   (setq rowCounter 1)
   (setq columnCounter 1)
   (setq nextRow 0)
@@ -49,7 +52,7 @@
     (setq rowCounter (+ 4 rowCounter))	
   	(setq columnCounter 1)
   )
-(CloseExcel "C:\\Users\\BFS\\Documents\\polesData.xlsx")
+(CloseExcel finalExcelPath)
   
   (princ "\nexported\n")
 )
@@ -187,16 +190,3 @@
   
 (princ)
 )
-
-
-
-
-
-	(defun getdynprops ( blk )
-		(mapcar '(lambda ( x ) (cons (vla-get-propertyname x) (vlax-get x 'value)))
-			(vlax-invoke blk 'getdynamicblockproperties)
-		)
-	)
-
-
-; (command "_rotate" x "" (list 271369.4587 556847.1665) (list 271365.7758 556857.2299) "")
