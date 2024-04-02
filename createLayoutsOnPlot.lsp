@@ -1,8 +1,7 @@
 (defun c:clp ()
   
   
-(setq layersList '("RZUT_POWIAT" "RZUT_GMINA" "RZUT_KOWR" "RZUT_STAROSTWO" "RZUT_WODY" "RZUT_LASY"))
-
+(setq layersList '("RZUT_POWIAT" "RZUT_GMINA" "RZUT_KOWR" "RZUT_STAROSTWO" "RZUT_WODY" "RZUT_LASY", "RZUT_PRYWATNY"))
 (setq rectangleDim (list 157.5 101.250))
 (setq targetLayer "SLUP_QGIS")	
 (setq OLDSNAP (getvar "OSMODE"))
@@ -87,6 +86,23 @@
 	)
   (progn privateLength)
 )
+(defun findAllPlotNumbers ()
+  (setq allPlotNumber 0)
+  (foreach everyPlotName plotList
+	(setq l 0)
+    (repeat (sslength objList)
+		(setq allObj (ssname objList l))
+		(setq allEntObj (entget allObj))
+		(setq allPlotName (getValue 1 allEntObj))
+      
+		(if (equal everyPlotName allPlotName)
+  			(setq allPlotNumber (1+ allPlotNumber))
+        )
+	(setq l (1+ l))
+	)
+  )
+  (progn allPlotNumber)
+)
 (defun handleTable (plotNumber allPlotNumber)
 	(setq allLayoutObjects (ssget "X" (list (cons 410 (getvar "ctab")))))
 	(setq number (strcat plotNumber "/" allPlotNumber))
@@ -104,6 +120,7 @@
 
 (if objList
 	(progn
+		(setq allPlotNumber (findAllPlotNumbers))
 		(setq plotNumber 0)
 		(foreach plot plotList
 			(setq privatePlotNumber 0)
@@ -144,7 +161,7 @@
                         )
 						(command "_pspace")
 						(if plotOwner
-							(handleTable (itoa plotNumber) (itoa (sslength objList)))
+							(handleTable (itoa plotNumber) (itoa allPlotNumber))
 							(handleTable (itoa privatePlotNumber) (itoa (findSamePlotsNumbers plotName)))
                         )
 					)
