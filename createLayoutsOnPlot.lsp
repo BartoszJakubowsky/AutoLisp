@@ -135,12 +135,12 @@
 				; 	(setq centerCoords (getValue 11 entObj))
                 ; )
 				(setq centerCoords (getValue 10 entObj))
-
 				(if (equal plot plotName)
 					(progn
 						(setq plotNumber (1+ plotNumber))
 						(setq privatePlotNumber (1+ privatePlotNumber))
-						(if plotOwner
+						(setq isPlotOwner (> (strlen plotOwner) 0))
+						(if isPlotOwner
 							(setq formatPlotName (strcat plotOwner " " "(" (itoa plotNumber) ")"))
 							(setq formatPlotName (strcat (vl-string-subst "_" "/" plotName) " " "(" (itoa privatePlotNumber) ")"))	
 						)
@@ -151,7 +151,7 @@
 						(command "_zoom" "_o" obj "")
 						(command "_zoom" "_s" "10/77") ;(1:10) ;10/77
 
-						(if plotOwner
+						(if isPlotOwner
 							(progn
 								(selectLayer plotOwner)
 								(drawRectangle centerCoords)
@@ -160,7 +160,7 @@
                             )
                         )
 						(command "_pspace")
-						(if plotOwner
+						(if isPlotOwner
 							(handleTable (itoa plotNumber) (itoa allPlotNumber))
 							(handleTable (itoa privatePlotNumber) (itoa (findSamePlotsNumbers plotName)))
                         )

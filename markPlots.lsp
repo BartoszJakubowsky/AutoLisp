@@ -26,6 +26,7 @@
 )
 
 (setq layerEnt (entget (car (entsel "Wybierz obiekt, na ktorym znajduja sie numery dzialek"))))
+(setq lay (getValue 8 layerEnt))
 (setq s (ssget "_A" (list (cons 0 "TEXT,MTEXT") (cons 8 lay))))  
 
 (setq dimension 2.5)
