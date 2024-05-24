@@ -1,4 +1,9 @@
-(defun c:markPlots ()
+(defun c:markPlots (/ dimension)
+(if (not dimension)
+	; (setq dimension 2.5)
+	(setq dimension 4.0)
+)
+(print dimension)
 (setq OLDSNAP (getvar "OSMODE"))
 (setq OLDBLIP (getvar "BLIPMODE"))
 (setq OLDCMDECHO (getvar "CMDECHO"))
@@ -29,7 +34,6 @@
 (setq lay (getValue 8 layerEnt))
 (setq s (ssget "_A" (list (cons 0 "TEXT,MTEXT") (cons 8 lay))))  
 
-(setq dimension 2.5)
 (switchDefaultSystemVars T)
 (foreach strPlot excelPlotList
 	(setq plot (car strPlot))

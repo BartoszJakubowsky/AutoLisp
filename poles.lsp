@@ -1,5 +1,6 @@
 (defun c:doPoles()
-  (setq excelPolesPath (getfiled "Wybierz excel z zestawieniem słupów" "c:/Documents/" "xlsx" 2))	
+;   (setq excelPolesPath (getfiled "Wybierz excel z zestawieniem słupów" "c:/Documents/" "xlsx" 2))	
+  (setq excelPolesPath (getfiled "Wybierz excel z zestawieniem słupów" "" "xlsx" 2))	
   (setq polesList (GetExcel excelPolesPath "Arkusz1" nil))
   (setq usedPolesList '())
   (setq previousPole "")
