@@ -55,7 +55,7 @@
 		(setq finalPoint (list (+ xMidPoint xHighMleader) (+ yMidPoint yHighMleader)))
 		(setq message (strcat
                         "Przecisk nr: " 
-                        (rtos lineNumber)
+                        (itoa lineNumber)
                         "\n"
                         "Projektowany przecisk\nRHDPE 40mm"
                         "\n"
