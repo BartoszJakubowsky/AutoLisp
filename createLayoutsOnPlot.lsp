@@ -3,7 +3,7 @@
   
 (setq layersList '("RZUT_POWIAT" "RZUT_GMINA" "RZUT_KOWR" "RZUT_STAROSTWO" "RZUT_WODY" "RZUT_LASY" "RZUT_PRYWATNY"))
 (setq rectangleDimA3 (list 204.95 131.5))
-(setq rectangleDimA4 (list 143.5 87.950))
+(setq rectangleDimA4 (list 286.0 175.500))
 (setq OLDSNAP (getvar "OSMODE"))
 (setq OLDBLIP (getvar "BLIPMODE"))
 (setq OLDCMDECHO (getvar "CMDECHO"))
@@ -95,8 +95,9 @@
 
 (defun drawNumber (coords plotNumber)
   (switchDefaultSystemVars T)
-  (command "_text" "y" "_mc" coords "100.0000g" (itoa plotNumber))
-  (command "_scale" (entlast) "" coords 100 "")
+  (command "_text" "y" "_mc" coords "100" "0" (itoa plotNumber))
+;   (command "_text" "y" "_mc" coords "100.0000g" (itoa plotNumber))
+;   (command "_scale" (entlast) "" coords 100 "")	
 
   (switchDefaultSystemVars nil)
 )
@@ -202,7 +203,8 @@
 					(progn
 						(setq plotNumber (1+ plotNumber))
 						(setq privatePlotNumber (1+ privatePlotNumber))
-						(setq isPlotOwner plotOwner)
+						(setq isPlotOwner (not (equal plotOwner "")))
+						; (setq isPlotOwner nil)
 						(if isPlotOwner
 							(setq formatPlotName (strcat plotOwner " " "(" (itoa plotNumber) ")"))
 							(setq formatPlotName (strcat (vl-string-subst "_" "/" plotName) " " "(" (itoa privatePlotNumber) ")"))	
@@ -212,12 +214,20 @@
 
 						(command "_mspace")
 						(command "_zoom" "_o" obj "")
-						(command "_zoom" "_s" "2/1xp") ;1:1500
+						(if (equal layoutType "A3")
+							(command "_zoom" "_s" "2/1xp") ;1:1500
+							(command "_zoom" "_s" "1/1xp") ;1:1000
+                        )
 						(if isPlotOwner
 							(progn
 								(selectLayer plotOwner)
 								(drawRectangle centerCoords)
 								(drawNumber centerCoords plotNumber)
+								(selectLayer nil)
+                            )
+							(progn
+								(selectLayer "PRYWATNY")
+								(drawRectangle centerCoords)
 								(selectLayer nil)
                             )
                         )
