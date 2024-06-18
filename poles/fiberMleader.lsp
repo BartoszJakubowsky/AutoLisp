@@ -1,4 +1,16 @@
+
+(defun c:cx ()
+  (fiberMleader T)
+)
+
 (defun c:cc ()
+  (fiberMleader nil)
+)
+(defun fiberMleader (direction)
+
+;distances for mleader
+(setq yDistance 2.4932)
+(setq xDistance 2.4034)
 
   
 (setq OLDSNAP (getvar "OSMODE"))
@@ -19,6 +31,27 @@
 		)
 	)
 )
+; (defun filterFibers (ssObj)
+;   (setq doesItCrossFibers nil)
+;   (repeat (sslength ssObj)
+;     (setq entName (ssname ssObj i)
+;                 ent (entget entName)
+;         i (1+ i)
+;     )
+;     (setq isEntLine (filetrForLines ent))
+;     (if isEntLine
+;       (progn 
+;         (setq entLine (list isEntLine))
+;         (setq crossedFibers (filterLinesText entLine))
+
+;         (if crossedFibers
+;           (setq doesItCrossFibers T)
+;         )
+;       )
+;     )
+;   )
+;   (progn doesItCrossFibers)
+; )
 (defun filterLinesText (linesText)
   (setq filteredTextLines '())
   
@@ -86,27 +119,88 @@
   )
   (progn fiberCablesText)  
 )
+(defun setProperLayer (fibers)
+  (setq isFiberM nil)
+  (foreach fiber fibers
+    (if (equal fiber "ADSS_M")
+      (setq isFiberM T)
+    )
+  )
+
+  (if isFiberM
+    (setvar "clayer" "OPIS_M")
+    (setvar "clayer" "OPIS_A")
+  )
+)
 (defun createMleader (fibers centerPoint)
-  (setq secondPoint (createSecondPoint centerPoint))
+  (setq secondPoint (createSecondPoint centerPoint nil))
   (setq text "")
   
   (setq text (createText fibers))
   (switchDefaultSystemVars T)
+  (setProperLayer fibers)
   (command "_mleader" centerPoint secondPoint "_y" text)
+
+  ;check if mleader is not in the way of something
+  (setq mleaderEnt (entlast))
+  (setq mleaderSs (ssadd))
+  (setq mleaderSs (ssadd mleaderEnt))
+  (setq crossedObjectsWithMleader (fs mleaderSS))
+
+  ; (setq doesItCrossFibers (filterFibers crossedObjectsWithMleader))
+  ;1 == only mleader
+  (if (> (sslength crossedObjectsWithMleader) 1)
+    (progn 
+      (entdel mleaderEnt)
+      (setq secondPoint (createSecondPoint centerPoint T))
+      (command "_mleader" centerPoint secondPoint "_y" text)
+    )
+  )
+
   (switchDefaultSystemVars nil)
   
 )
-(defun createSecondPoint (centerPoint)
+(defun createSecondPoint (centerPoint forceDirection)
   (setq xCenterPoint (nth 0 centerPoint))
   (setq yCenterPoint (nth 1 centerPoint))
-  (setq xDistance 2.4034)
-  (setq yDistance 2.4932)
-  
-  ;left / up
-  (setq secondPoint (list 
+
+  ; (defun xor (a b)
+  ;   (progn (or (and a (not b)) (and (not a) b)))
+  ; )
+  (defun leftUp ()
+    (progn
+      (setq secondPoint (list 
                       (- xCenterPoint xDistance)
                       (+ yCenterPoint yDistance)
                     ))
+    )
+  )
+  ;left / up
+  (defun rightUp ()
+    (progn
+      (setq secondPoint (list 
+                    (+ xCenterPoint xDistance)
+                    (+ yCenterPoint yDistance)
+                  ))
+    )
+  )
+  
+  ;T - right Up
+  ; (if (xor direction forceDirection)
+  ;   (setq secondPoint (leftUp))
+  ;   (setq secondPoint (rightUp))
+  ; )
+
+  (if (not forceDirection)
+    (if direction
+      (setq secondPoint (rightUp))
+      (setq secondPoint (leftUp))
+    )
+    (if direction
+      (setq secondPoint (leftUp))
+      (setq secondPoint (rightUp))
+    )
+  )
 
   (progn secondPoint)
 )
@@ -184,7 +278,7 @@
 
 			(if isEntLine
 				(setq fibers (cons isEntLine fibers))
-            )
+      )
 		)
     )
 )
