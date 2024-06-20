@@ -115,3 +115,39 @@
 )
 
 (vl-load-com) (princ)
+
+(defun getdynpropvalue ( blk prp )
+    (setq prp (strcase prp))
+    (vl-some '(lambda ( x ) (if (= prp (strcase (vla-get-propertyname x))) (vlax-get x 'value)))
+        (vlax-invoke blk 'getdynamicblockproperties)
+    )
+)
+
+
+(defun getdynprops ( blk )
+    (mapcar '(lambda ( x ) (cons (vla-get-propertyname x) (vlax-get x 'value)))
+        (vlax-invoke blk 'getdynamicblockproperties)
+    )
+)
+
+(vlax-get-property (vlax-ename->vla-object (car (entsel ))) 'CenterPoint)
+
+(vlax-get-property vla-blk "CornerLeft X")
+(vla-get-displaygrips vla-blk)
+(defun c:getprop ( / ent sel )
+   (if (and (cdddr (setq sel (nentselp)))
+            (setq ent (entmakex (entget (car sel))))
+       )
+       (progn
+           (vla-transformby (vlax-ename->vla-object ent) (vlax-tmatrix (caddr sel)))
+           (vla-delete (vlax-ename->vla-object (car sel)))
+           (vla-regen (vla-get-activedocument (vlax-get-acad-object)) acallviewports)
+       )
+   )
+   (princ)
+)
+(vl-load-com) (princ)
+
+
+      (setq test (rtos (cdr (assoc 50 (entget (car (entsel))))) 2))
+	(rtos (* 180.0 (/ (atof rotation) pi)) 2 0)	
