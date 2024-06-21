@@ -212,7 +212,6 @@
 				j (1+ j)
 		)
 		(setq centerPoint (getValue 110 ent))
-		(princ centerPoint)
 		(updateMleader centerPoint ent)
 	)
 
