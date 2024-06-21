@@ -1,0 +1,221 @@
+(defun c:updateFiberMleader ()
+	(setq s (ssget "_A" (list (cons 0 "MULTILEADER") (cons 8 "OPIS_M,OPIS_A"))))  
+  
+  
+	(defun getLayer (ent)
+  		(progn (getValue 8 ent))
+	)
+	(defun getValue (num entity)
+		(progn (cdr (assoc num entity)))
+	)
+  
+	(defun editValue(num entity value)
+		(setq entity
+			(subst (cons num value)
+				(assoc num entity)            
+				entity                      
+			)
+		)
+		(entmod entity) 
+	)
+  
+	(defun updateMleader (centerPoint mleaderEnt)
+		
+		
+		(setq OLDSNAP (getvar "OSMODE"))
+		(setq OLDBLIP (getvar "BLIPMODE"))
+		(setq OLDCMDECHO (getvar "CMDECHO"))
+		(setq OLDLAYER (getvar "CLAYER"))
+      
+		(defun switchDefaultSystemVars (onOff)
+			(if (equal onOff T)
+				(progn
+					(setvar "OSMODE" 0)
+					(setvar "CMDECHO" 0)
+					(setvar "BLIPMODE" 0)
+				)
+				(progn
+					(setvar "OSMODE" OLDSNAP)
+					(setvar "CMDECHO" OLDCMDECHO)
+					(setvar "BLIPMODE" OLDBLIP)
+				)
+			)
+		)
+		
+		(defun filterLinesText (linesText)
+			(setq filteredTextLines '())
+			
+			(foreach str linesText
+				(if (wcmatch str "NN_*")
+					(progn 
+						(setq str (substr str 4))
+						(setq filteredTextLines (cons str filteredTextLines))
+					)
+				)
+				(if (wcmatch str "ADSS*")
+					(setq filteredTextLines (cons str filteredTextLines))
+				)
+			)
+			
+			(progn filteredTextLines)
+		)
+		(defun createText (fibers)
+			(setq m_cables 0)
+			(setq a_cables 0)
+			(setq e_cable nil)
+			
+			(setq m_cable "ADSS 48J")
+			(setq a_cable "ADSS 2J")
+			
+			(foreach cable fibers
+				(if (equal cable "ADSS_M")
+				(setq m_cables (1+ m_cables))
+				(if (equal cable "ADSS_A")
+					(setq a_cables (1+ a_cables))
+					(setq e_cable cable)
+				)
+				)
+			)
+		
+			(setq fiberCablesText "proj. ")
+			(setq M_FiberCableText "")
+			(setq A_FiberCableText "")
+			
+			(if (not (equal m_cables 0))
+				(if (equal m_cables 1)
+					(setq M_FiberCableText m_cable)
+					(setq M_FiberCableText (strcat (itoa m_cables) "x" m_cable))
+				)
+			)
+			(if (not (equal a_cables 0))
+				(if (equal a_cables 1)
+					(setq A_FiberCableText a_cable)
+					(setq A_FiberCableText (strcat (itoa a_cables) "x" a_cable))
+				)
+			)
+			
+			(if (and (not (equal a_cables 0)) (not (equal m_cables 0)))
+				(setq fiberCablesText (strcat fiberCablesText M_FiberCableText " + " A_FiberCableText))
+			)
+			(if (and (not (equal a_cables 0)) (equal m_cables 0))
+				(setq fiberCablesText (strcat fiberCablesText A_FiberCableText))
+			)
+			(if (and (not (equal m_cables 0)) (equal a_cables 0))
+				(setq fiberCablesText (strcat fiberCablesText M_FiberCableText))
+			)
+			
+			(if e_cable
+				(setq fiberCablesText (strcat fiberCablesText "\n" "istn. " e_cable))
+			)
+			(progn fiberCablesText)  
+		)
+		(defun editMleader (fibers mleaderEnt)
+			(setq text "")
+			(setq text (createText fibers))
+			(editValue 304 mleaderEnt text)
+		)
+      
+		(defun fs ( ss / ssxunlocked ss i e sss)
+			(defun ssxunlocked (/ filter elst ss)
+			(setq filter "")
+			(while (setq elst (tblnext "layer" (null elst)))
+				(if (= 4 (logand 4 (cdr (assoc 70 elst))))
+				(setq filter (strcat filter (cdr (assoc 2 elst)) ","))
+				)
+			)
+			(and (= filter "")(setq filter "~*"))
+			(setq ss (ssget "_X" (list (cons 0 "*") (cons -4 "<not") (cons 8 filter) (cons -4 "not>"))))
+			ss
+			)
+
+			(defun fastsel (e / ss i ent)
+			(vl-load-com)
+			(setq ss (ssxunlocked))
+			(setq i -1)
+			(if (null sss) (setq sss (ssadd)))
+			(while (setq ent (ssname ss (setq i (1+ i))))
+				(if (not (eq e ent))
+				(if (vlax-invoke (vlax-ename->vla-object e) 'intersectwith (vlax-ename->vla-object ent) acextendnone)
+					(ssadd ent sss)
+				)
+				)
+			)
+			(ssadd e sss)
+			)
+
+				(setq i -1)
+				(while (setq e (ssname ss (setq i (1+ i))))
+				(fastsel e)
+				)
+				;  (sssetfirst nil sss)
+				(progn sss)
+		)
+		(defun filetrForLines (ent)
+			(setq entType (getValue 0 ent))
+			
+			(if (or (equal entType "LINE") (equal entType "LWPOLYLINE"))
+				(progn (getLayer ent))
+				(progn nil)
+			)
+		)
+		(defun getObjects (point)
+          
+			(switchDefaultSystemVars T)
+			(command "_circle" point 2)
+			(switchDefaultSystemVars nil)
+          
+			(setq circle (entlast))
+			(setq sel (ssadd))
+			(setq sel (ssadd circle sel))
+			(setq objects (fs sel))
+			(entdel circle)
+
+			(progn objects)
+		)
+      
+		(setq fibers '())
+		(if (not centerPoint)
+			(princ "Nie wskazano punktu")
+			(progn
+				(setq selectedEntities (getObjects centerPoint))
+				(setq i 0)
+				(repeat (sslength selectedEntities)
+					(setq entName (ssname selectedEntities i)
+						ent (entget entName)
+							i (1+ i)
+					)
+					(setq isEntLine (filetrForLines ent))
+
+					(if isEntLine
+						(setq fibers (cons isEntLine fibers))
+			)
+				)
+			)
+		)
+		
+		(if (> (length fibers) 0)
+			(progn
+				(setq fibers (filterLinesText fibers))
+				(editMleader fibers mleaderEnt)
+			)
+			(princ "\nNie ma tutaj zadnych kabli\n")
+		)
+		(princ)
+	)
+	;110 - center point
+	
+	(setq j 0)
+	(repeat (sslength s)
+		(setq entName (ssname s j)
+				; (setq vla-blk (vlax-ename->vla-object entName))
+				ent (entget entName)
+				j (1+ j)
+		)
+		(setq centerPoint (getValue 110 ent))
+		(princ centerPoint)
+		(updateMleader centerPoint ent)
+	)
+
+)
+
+
