@@ -2,7 +2,9 @@
   
 (setq poleLayer "SLUP")  
 (setq fiberMainLayer "ADSS_M")  
+(setq fiberMainCable "ADSS 48J")
 (setq fiberSecondLayer "ADSS_A")  
+(setq fiberSecondCable "ADSS 2J")
 (setq NNcable "NN_*")
 (setq secondNNCables '("AsXSn 4x25" "AsXSn 2x25"))
 (setq docsPath (strcat (getenv "USERPROFILE") "\\Documents"))
@@ -124,8 +126,8 @@
   )
 
 	(if (equal layer poleLayer) (setq export (handlePole entity blk)))
-	(if (equal layer fiberMainLayer) (setq export (handleCable entity "m" layer entname)))
-	(if (equal layer fiberSecondLayer) (setq export (handleCable entity "a" layer entname)))
+	(if (equal layer fiberMainLayer) (setq export (handleCable entity "m" fiberMainCable entname)))
+	(if (equal layer fiberSecondLayer) (setq export (handleCable entity "a" fiberSecondCable entname)))
   
 	(progn export)
 )
@@ -137,8 +139,8 @@
   (setq attPoleNumber (getValue "NUMER" attr))
   (setq attPoleFunction (getValue "FUNKCJA" attr))
   (setq attPoleStation (getValue "STACJA" attr))
-  (setq attPoleStation (getValue "NUMER_OK" attr))
-  (setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation))
+  (setq attPoleNumberOK (getValue "NUMER_OK" attr))
+  (setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation attPoleNumberOK))
 
 
 
@@ -239,7 +241,7 @@
             (setq compareVector (calculateVector compareCoorsd1 compareCoords2))
             (setq dataVector (calculateVector dataCoords1 dataCoords2))
 
-            (setq isSameDirection (compareVectors compareVector dataVector 1))
+            (setq isSameDirection (compareVectors compareVector dataVector 2))
             (if isSameDirection
               (progn
                 (setq dataName (strcat dataName "-" compareDataName))

@@ -66,6 +66,7 @@
           (progn
             (setq oldType ...)
             (setq oldName (strcat oldName ...))
+            
           )
         )
       )
