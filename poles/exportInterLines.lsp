@@ -56,8 +56,9 @@
   (defun exportToExcel ()
 	(setq columns '("A" "B" "C"))
 	(setq docsPath (strcat (getenv "USERPROFILE") "\\Documents"))
-  (setq emptyExcelPath (strcat docsPath "\\empty.xlsx"))
-	(setq finalExcelPath ".xlsx")
+  	(setq emptyExcelPath (strcat docsPath "\\empty.xlsx"))
+	(setq currentDwgPath (getvar "dwgprefix"))
+	(setq finalExcelPath (strcat currentDwgPath "zestawienie_kabli.xlsx"))
     
 	(OpenExcel emptyExcelPath "Arkusz1" nil)
 	(setq rowCounter 1)
