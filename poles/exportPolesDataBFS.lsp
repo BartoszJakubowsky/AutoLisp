@@ -64,6 +64,30 @@
 
   (progn vector)
 )
+(defun compareCoords (firstEntCoordsList secondEntCoordsList)
+
+  	(setq radius 2.4) 	
+	(setq firstCoords1 (nth 0 firstEntCoordsList))
+	(setq firstCoords2 (nth 1 firstEntCoordsList))
+	
+	(setq secondCoords1 (nth 0 secondEntCoordsList))
+	(setq secondCoords2 (nth 1 secondEntCoordsList))
+	
+	(setq dist1 (distance firstCoords1 secondCoords1))
+  	(setq dist2 (distance firstCoords2 secondCoords2))
+	
+	(setq dist3 (distance firstCoords1 secondCoords2))
+	(setq dist4 (distance firstCoords2 secondCoords1))
+	
+	(if 
+   		(or 
+          (and (< dist1 radius ) (< dist2 radius )) 
+          (and (< dist3 radius ) (< dist4 radius ))
+        )
+		(progn T)
+		(progn nil)
+    )
+)
 (defun compareVectors (vector1 vector2 tolerance)
   (apply 'and
          (mapcar
@@ -235,13 +259,17 @@
           (progn
             (setq compareDataType (nth 0 compareData))
             (setq compareDataName (nth 1 compareData))
-            (setq compareCoorsd1 (nth 2 compareData))
+            (setq compareCoords1 (nth 2 compareData))
             (setq compareCoords2 (nth 3 compareData))
 
-            (setq compareVector (calculateVector compareCoorsd1 compareCoords2))
-            (setq dataVector (calculateVector dataCoords1 dataCoords2))
-
-            (setq isSameDirection (compareVectors compareVector dataVector 2))
+			;version with vectors
+            ; (setq compareVector (calculateVector compareCoords1 compareCoords2))
+            ; (setq dataVector (calculateVector dataCoords1 dataCoords2))
+            ; (setq isSameDirection (compareVectors compareVector dataVector 2))
+            (setq dataCoordsList (list dataCoords1 dataCoords2))
+            (setq compareCoordsList (list compareCoords1 compareCoords2))
+            (setq isSameDirection (compareCoords dataCoordsList compareCoordsList))
+            
             (if isSameDirection
               (progn
                 (setq dataName (strcat dataName "-" compareDataName))
