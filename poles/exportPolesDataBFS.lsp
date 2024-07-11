@@ -9,7 +9,7 @@
 (setq secondNNCables '("AsXSn 4x25" "AsXSn 2x25"))
 (setq docsPath (strcat (getenv "USERPROFILE") "\\Documents"))
 (setq emptyExcelPath (strcat docsPath "\\empty.xlsx"))
-(setq finalExcelPath (strcat docsPath "\\WYCIĄG_SŁUPÓW.xlsx"))
+(setq finalExcelPath (strcat (getvar 'dwgprefix) "WYCIĄG_SŁUPÓW.xlsx"))
 (setq dataForExcel '())
 (defun exportToExcel (dataForExcel)
   ;one pole takes 4 rows
@@ -164,7 +164,8 @@
   (setq attPoleFunction (getValue "FUNKCJA" attr))
   (setq attPoleStation (getValue "STACJA" attr))
   (setq attPoleNumberOK (getValue "NUMER_OK" attr))
-  (setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation attPoleNumberOK))
+;   (setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation attPoleNumberOK))
+  (setq attrForExport (strcat attPoleType "_" attPoleNumber "_" attPoleFunction "_" attPoleStation "_" attPoleNumberOK))
 
 
 

@@ -22,7 +22,7 @@
   	(setq isDelimeter (vl-string-search delimiter pattern))
 	(if isDelimeter
 		(setq patterns (splitstr pattern delimiter))
-		(setq patterns (cons patter patterns))
+		(setq patterns (list pattern))
     )	
 	(setq matchedLayers '())
 	(foreach lay layList
