@@ -46,7 +46,6 @@
 	(if lst
 		(progn
 		(write-line (car lst) fileHandle) 
-		; Rekurencyjne wywołanie funkcji z resztą listy
 		(SaveElementsToFile (cdr lst) fileHandle) 
 		)
 	)
