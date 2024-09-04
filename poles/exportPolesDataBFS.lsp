@@ -236,8 +236,8 @@
     
 			(setq fsObject (handleEntity entity vla-obj))
 			(if (not (equal fsObject nil))
-        (setq unsegregatedListOfCablesWithPole (cons fsObject unsegregatedListOfCablesWithPole))
-      )
+				(setq unsegregatedListOfCablesWithPole (cons fsObject unsegregatedListOfCablesWithPole))
+			)
 		)
 	(progn unsegregatedListOfCablesWithPole)
 	

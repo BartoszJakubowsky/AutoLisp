@@ -1,7 +1,7 @@
 (defun c:searchForText ()
   
   (setq searchedText (getstring "Wpisz szukany tekst: "))
-  (setq allText (ssget "_A" (list (cons 0 "TEXT,MTEXT"))))  
+  (setq allText (ssget "_A" (list (cons 0 "TEXT,MTEXT") (cons 8 "Numery_dzialek"))))  
   
   (setq targetText nil)
   (setq targetObject nil)

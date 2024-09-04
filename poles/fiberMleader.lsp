@@ -31,27 +31,7 @@
 		)
 	)
 )
-; (defun filterFibers (ssObj)
-;   (setq doesItCrossFibers nil)
-;   (repeat (sslength ssObj)
-;     (setq entName (ssname ssObj i)
-;                 ent (entget entName)
-;         i (1+ i)
-;     )
-;     (setq isEntLine (filetrForLines ent))
-;     (if isEntLine
-;       (progn 
-;         (setq entLine (list isEntLine))
-;         (setq crossedFibers (filterLinesText entLine))
 
-;         (if crossedFibers
-;           (setq doesItCrossFibers T)
-;         )
-;       )
-;     )
-;   )
-;   (progn doesItCrossFibers)
-; )
 (defun filterLinesText (linesText)
   (setq filteredTextLines '())
   
