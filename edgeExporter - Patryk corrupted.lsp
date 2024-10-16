@@ -182,7 +182,7 @@
 
 	(setq emptyExcelPath "C:\\Users\\BFS\\Documents\\empty.xlsx")
 	;(setq pathToExcel (strcat path emptyXLS))
-	(setq pathToFinalExcel (strcat path "CORDS_" dwgname ".xlsx"))
+	(setq pathToFinalExcel (strcat path "Koordynaty_" dwgname ".xlsx"))
 	
 	(princ pathToExcel)
 	(OpenExcel emptyExcelPath "Arkusz1" nil)

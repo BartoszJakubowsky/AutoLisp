@@ -1,3 +1,7 @@
+;excel first col plot numbers
+;excel second col empty if 'PYWATNY'
+;or part of string from layersList strings
+
 (defun c:clp ()
   
   

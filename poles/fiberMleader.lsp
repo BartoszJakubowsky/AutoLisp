@@ -228,7 +228,7 @@
 (defun filetrForLines (ent)
   (setq entType (getValue 0 ent))
   
-  (if (or (equal entType "LINE") (equal entType "LWPOLYLINE"))
+  (if (or (= entType "LINE") (= entType "LWPOLYLINE"))
     (progn (getLayer ent))
     (progn nil)
   )

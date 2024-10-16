@@ -38,7 +38,12 @@
         )
 		(progn
 			(princ "\nTHE LAYA WAS FOUND!\n")
+
         	(setvar "CLAYER" matchedLayer)
+			;if objects are selected, change them to written layer
+			(if (ssget "_I")
+				(command "_laycur")
+            )
         )
     )
 )
