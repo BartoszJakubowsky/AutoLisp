@@ -26,6 +26,7 @@
   )
   (defun textFound ()
     (command "_zoom" "_o" targetObject "")
+	(command "_zoom" "_s" "1/30xp")
     (setq message (strcat "Tekst " searchedText " znaleziony"))
     (print message)
   )

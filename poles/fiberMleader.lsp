@@ -6,12 +6,13 @@
 (defun c:cc ()
   (fiberMleader nil)
 )
+
 (defun fiberMleader (direction)
 
 ;distances for mleader
 (setq yDistance 2.4932)
 (setq xDistance 2.4034)
-
+(setq radius 2.5)
   
 (setq OLDSNAP (getvar "OSMODE"))
 (setq OLDBLIP (getvar "BLIPMODE"))
@@ -58,7 +59,7 @@
   (setq a_cable "ADSS 2J")
   
   (foreach cable fibers
-    (if (equal cable "ADSS_M")
+    (if (= cable "ADSS_M")
       (setq m_cables (1+ m_cables))
       (if (equal cable "ADSS_A")
       	(setq a_cables (1+ a_cables))
@@ -227,19 +228,25 @@
 )
 (defun filetrForLines (ent)
   (setq entType (getValue 0 ent))
-  
+
   (if (or (= entType "LINE") (= entType "LWPOLYLINE"))
     (progn (getLayer ent))
     (progn nil)
   )
 )
 (defun getObjects (point)
-  (command "_circle" point 2)
-  (setq circle (entlast))
-  (setq sel (ssadd))
-  (setq sel (ssadd circle sel))
-  (setq objects (fs sel))
-  (entdel circle)
+
+  (setq p1 (list (- (car descriptionPoint) radius) (- (cadr descriptionPoint) radius))
+        p3 (list (+ (car descriptionPoint) radius) (+ (cadr descriptionPoint) radius)))
+  (setq objects (ssget "_C" p1 p3 '((0 . "LINE,LWPOLYLINE"))))
+
+
+  ; (command "_circle" point 2)
+  ; (setq circle (entlast))
+  ; (setq sel (ssadd))
+  ; (setq sel (ssadd circle sel))
+  ; (setq objects (fs sel))
+  ; (entdel circle)
   (progn objects)
 )
 (setq descriptionPoint (getpoint "Wskaz punkt"))
@@ -247,28 +254,32 @@
 (if (not descriptionPoint)
 	(princ "Nie wskazano punktu")
 	(progn
-   		(setq selectedEntities (getObjects descriptionPoint))
+   	(setq selectedEntities (getObjects descriptionPoint))
 		(setq i 0)
 		(repeat (sslength selectedEntities)
 			(setq entName (ssname selectedEntities i)
                   ent (entget entName)
 					i (1+ i)
 			)
-			(setq isEntLine (filetrForLines ent))
+			; (setq isEntLine (filetrForLines ent))
 
-			(if isEntLine
-				(setq fibers (cons isEntLine fibers))
-      )
+			; (if isEntLine
+			; 	(setq fibers (cons isEntLine fibers))
+      ; )
+      (setq fibers (cons (getLayer ent) fibers))
 		)
     )
 )
-  
   (if (> (length fibers) 0)
     (progn
       (setq fibers (filterLinesText fibers))
       (createMleader fibers descriptionPoint)
+      (setvar "clayer" OLDLAYER)
     )
     (princ "\nNie ma tutaj zadnych kabli\n")
   )
   (princ)
 )
+
+
+

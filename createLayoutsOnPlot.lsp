@@ -5,7 +5,7 @@
 (defun c:clp ()
   
   
-(setq layersList '("RZUT_POWIAT" "RZUT_GMINA" "RZUT_KOWR" "RZUT_STAROSTWO" "RZUT_WODY" "RZUT_LASY" "RZUT_PRYWATNY"))
+(setq layersList '("ARKUSZ_POWIAT" "ARKUSZ_GMINA" "ARKUSZ_KOWR" "ARKUSZ_STAROSTWO" "ARKUSZ_WODY" "ARKUSZ_LASY" "ARKUSZ_PRYWATNY"))
 (setq rectangleDimA3 (list 204.95 131.5))
 (setq rectangleDimA4 (list 286.0 175.500))
 (setq OLDSNAP (getvar "OSMODE"))
@@ -42,7 +42,7 @@
 (setq layerEnt (entget (car (entsel "Wybierz obiekt, na ktorym znajduja sie numery dzialek"))))
 (setq lay (getValue 8 layerEnt))
 (setq objList (ssget "_A" (list (cons 0 "TEXT,MTEXT") (cons 8 lay)))) 
-; (setq objList (ssget (list (cons 0 "TEXT,MTEXT") (cons 8 "0"))))  
+; (setq objList (ssget (list (cons 0 "TEXT,MTEXT") (cons 8 lay))))  
 
 (setq plotList '())
 (setq plotOwner (car (cdr (car excelPlotList))))
@@ -137,9 +137,13 @@
 		(setq layoutEntity (entget layoutObject))
 		(setq layoutObjectType (getValue 0 layoutEntity))	
 		(if (equal layoutObjectType "ACAD_TABLE")
-			(if (not (equal "" (vla-gettext (vlax-ename->vla-object layoutObject) 7 2)))
-				(vla-settext (vlax-ename->vla-object layoutObject) 7 2 number)
+			(if (not (equal "" (vla-gettext (vlax-ename->vla-object layoutObject) 8 2)))
+				(vla-settext (vlax-ename->vla-object layoutObject) 8 2 number)
             )
+			;KPO
+			; (if (not (equal "" (vla-gettext (vlax-ename->vla-object layoutObject) 7 2)))
+			; 	(vla-settext (vlax-ename->vla-object layoutObject) 7 2 number)
+			; )
 		)
 	(setq j (1+ j))
 	)
@@ -175,7 +179,6 @@
 		(choseLayout)
 		(setq allPlotNumber (findAllPlotNumbers))
 		(setq plotNumber 0)
-    (setq plotExcelRow 0)
 		(foreach plot plotList
 			(setq privatePlotNumber 0)
 			(setq i 0)
@@ -211,7 +214,7 @@
 								(selectLayer nil)
               )
 							(progn
-								(selectLayer "RZUT_PRYWATNY")
+								(selectLayer "ARKUSZ_PRYWATNY")
 								(drawRectangle centerCoords)
 								(selectLayer nil)
               )
@@ -229,6 +232,8 @@
   )
 )
   (CloseExcel nil)
+  (command "_model")
+  (command "_zoom" "_e")
   (princ)
 )
 

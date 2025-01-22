@@ -6,7 +6,7 @@
 (setq fiberSecondLayer "ADSS_A")  
 (setq fiberSecondCable "ADSS 2J")
 (setq NNcable "NN_*")
-(setq secondNNCables '("AsXSn 4x25" "AsXSn 2x25"))
+(setq secondNNCables '("AsXSn 4x25" "AsXSn 2x25" "AsXSn 4x16" "AL 4x25"))
 (setq docsPath (strcat (getenv "USERPROFILE") "\\Documents"))
 (setq emptyExcelPath (strcat docsPath "\\empty.xlsx"))
 (setq finalExcelPath (strcat (getvar 'dwgprefix) "WYCIĄG_SŁUPÓW.xlsx"))
@@ -65,7 +65,6 @@
   (progn vector)
 )
 (defun compareCoords (firstEntCoordsList secondEntCoordsList)
-
   	(setq radius 2.4) 	
 	(setq firstCoords1 (nth 0 firstEntCoordsList))
 	(setq firstCoords2 (nth 1 firstEntCoordsList))
@@ -73,20 +72,34 @@
 	(setq secondCoords1 (nth 0 secondEntCoordsList))
 	(setq secondCoords2 (nth 1 secondEntCoordsList))
 	
-	(setq dist1 (distance firstCoords1 secondCoords1))
-  	(setq dist2 (distance firstCoords2 secondCoords2))
-	
-	(setq dist3 (distance firstCoords1 secondCoords2))
-	(setq dist4 (distance firstCoords2 secondCoords1))
-	
 	(if 
-   		(or 
-          (and (< dist1 radius ) (< dist2 radius )) 
-          (and (< dist3 radius ) (< dist4 radius ))
+		(or
+			(= firstCoords1 nil)
+			(= firstCoords2 nil)
+			(= secondCoords1 nil)
+			(= secondCoords2 nil)
         )
 		(progn T)
-		(progn nil)
+		(progn
+			(setq dist1 (distance firstCoords1 secondCoords1))
+			(setq dist2 (distance firstCoords2 secondCoords2))
+
+			(setq dist3 (distance firstCoords1 secondCoords2))
+			(setq dist4 (distance firstCoords2 secondCoords1))
+
+			(if 
+				(or 
+					(and (< dist1 radius ) (< dist2 radius )) 
+					(and (< dist3 radius ) (< dist4 radius ))
+				)
+				(progn T)
+				(progn nil)
+			)
+        )
     )
+  
+  
+	
 )
 (defun compareVectors (vector1 vector2 tolerance)
   (apply 'and
@@ -304,11 +317,16 @@
   (setq sel (ssadd ent sel))
     ;each data is separate pole with
     ;objects in contact with it
+	
+	;debug princ
+;   (princ "\n")
+;   (princ (handlePole (entget ent) (vlax-ename->vla-object ent)))
+;   (princ "\n")
   (setq unsegregatedListOfCablesWithPole (fsEachPole (fs sel)))
   (setq segregatedListOfCablesWithPole (segregateData unsegregatedListOfCablesWithPole))
   (setq dataForExcel (cons segregatedListOfCablesWithPole dataForExcel))
 )
 (exportToExcel dataForExcel)
   
-(princ)
+(princ finalExcelPath)
 )
