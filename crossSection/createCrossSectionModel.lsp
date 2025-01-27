@@ -7,11 +7,11 @@
   (setq globalCableX 16.4375)
   (setq globalNextX 32.8750)
   (setq warningAlertList '())
-;   (setq excelPolesPath (getfiled "Wybierz excel z zestawieniem słupów" "C:\\Users\\BFS\\Documents\\PÓŁNOC BFS\\Hopowo - Wyczechowo\\2. PROJEKT ENERGETYCZNY\\" "xlsx" 2))
   (setq excelPolesPath (getfiled "Wybierz excel z zestawieniem słupów" "" "xlsx" 2))
   (setq crossSectionData (GetExcel excelPolesPath "Arkusz1" nil))
-  (CloseExcel nil)
   
+  (setq OLDLAYER (getvar "clayer"))
+
   (defun switchDefaultSystemVars (onOff)
 	(if (equal onOff T)
 		(progn
@@ -39,7 +39,6 @@
 			(vlax-invoke blk 'getattributes)
 		)
   )
-  
   (defun getPoleType (poleType)
     (if (or (vl-string-search "R" poleType) (vl-string-search "r" poleType))
 		(progn "2")
@@ -62,7 +61,7 @@
     (setq height nil)
     (if (or (= poleHeightA nil) (= poleHeightB nil))
 		(progn 
-			(setq warningAlertList (append crossSectionNumber warningAlertList))
+			(setq warningAlertList (cons crossSectionNumber warningAlertList))
 			(setq height "???")
         )
     )
@@ -84,16 +83,23 @@
     (editAtt (vlax-ename->vla-object (entlast)) "NR" crossSectionNumber)
     (progn height)
   )
-  (defun insertCables (cablesString height)
-    (setq cableNumb 1)
-	(if (vl-string-search "+" cablesString)
-		(setq cableNumb 2)
+  (defun insertCables (cablesNumber cablesString height)
+
+    (defun replaceUnderscore (str)
+    	; (if (wcmatch str "_")
+		; 	(progn (vl-string-subst "\n" "_" str))
+		; 	(progn str)
+        ; )
+		(progn (vl-string-subst "\n" "_" str))
     )
-	(setq cableInsert (strcat "CABLES_" (itoa cableNumb)))
-	(command "_insert" cableInsert (list (+ globalX globalCableX) globalYHeight) "1" "0" "0")
-    (editAtt (vlax-ename->vla-object (entlast)) "H" height)
-    (editAtt (vlax-ename->vla-object (entlast)) "CABLES" cablesString)
-  )
+    (setq cableInsert (strcat "CABLES_" cablesNumber))
+    (command "_insert" cableInsert (list (+ globalX globalCableX) globalYHeight) "1" "0" "0")
+      
+
+      (setq cableString (replaceUnderscore cablesString))
+      (editAtt (vlax-ename->vla-object (entlast)) "H" height)
+      (editAtt (vlax-ename->vla-object (entlast)) "CABLES" cableString)
+    )
   (defun insertPole (number typeP station x)
     (setq height (getPoleHeight typeP))
     (setq poleType (getPoleType typeP))
@@ -132,7 +138,68 @@
     (editAtt (vlax-ename->vla-object (entlast)) "TYP_SLUPA" typeP)
     (editAtt (vlax-ename->vla-object (entlast)) "STACJA" station)
   )
+  (defun createLayouts (entList)
+	(setq totalLayouts (length entList))
+	(defun getValue (num entity)
+		(progn (cdr (assoc num entity)))
+	)
+	(defun copyPlot (layoutType cLayoutNumber allLayoutsNumber)
+		(setq layoutName (strcat "ARK." cLayoutNumber " - " layoutType))
+		(command "_layout" "_c" layoutType layoutName)
+		(setvar "ctab" layoutName)
+    )
+	(defun zoomToObject (entName)
+		(command "_zoom" "_o" entName "")
+    )
+	(defun changeTableNumbers (plotNumber allPlotNumber)
+		(setq allLayoutObjects (ssget "X" (list (cons 410 (getvar "ctab")))))
+		(setq number (strcat plotNumber "/" allPlotNumber))
+		(setq j 0)
+		(repeat (sslength allLayoutObjects)
+			(setq layoutObject (ssname allLayoutObjects j))
+			(setq layoutEntity (entget layoutObject))
+			(setq layoutObjectType (getValue 0 layoutEntity))	
+			(if (equal layoutObjectType "ACAD_TABLE")
+				(if (not (equal "" (vla-gettext (vlax-ename->vla-object layoutObject) 8 2)))
+					(vla-settext (vlax-ename->vla-object layoutObject) 8 2 number)
+				)
+			)
+		(setq j (1+ j))
+		)
+	)
+	(setq currentNumber 1)
+	
+    
+	(foreach ent entList
+		(setq entName (nth (- currentNumber 1)entList))
+		(progn
+			(copyPlot "A4" (itoa currentNumber) (itoa totalLayouts))
+			(changeTableNumbers (itoa currentNumber) (itoa totalLayouts))
+			(command "_mspace")
+			(zoomToObject entName)
+			(command "_pspace")
+		)
+		(setq currentNumber (1+ currentNumber))
+	)
+  )
+  (defun warningAlert ()
+    (setq warningNumbers "")
+    (setq warningMessage "DO POPRAWY:\n")
+    (if warningAlertList
+      (progn
+		(foreach str warningAlertList
+			(if (= warningNumbers "")
+				(setq warningNumbers str)
+				(setq warningNumbers (strcat warningNumbers ", " str))
+			)
+        )
+        (alert (strcat warningMessage warningNumbers))
+      )
+    )
+  )
   (switchDefaultSystemVars T)
+  (setvar "ctab" "Model")
+  (setq createdCrossSections '())
   (foreach data crossSectionData
 		(setq crossSectionNumber (nth 0 data))
 		(setq crossSectionHeight (nth 1 data))
@@ -142,18 +209,32 @@
 		(setq poleNumberB (nth 5 data))
 		(setq poleTypeB (nth 6 data))
 		(setq poleStationB (nth 7 data))
-		(setq cablesString "ist. AsXSn 9x50 + AL2x25\nproj.ADSS 48J")
+		(setq cablesNumber (nth 8 data))
+		(setq cablesString (nth 9 data))
+		; (setq cablesString "proj. ADSS 2J\nistn. AsXSn 4x95")
+
 		
 		(setq height (insertCrossSection crossSectionNumber crossSectionHeight poleTypeA poleTypeB))
-		(insertCables cablesString height)
+		(setq createdCrossSections (append createdCrossSections (list (entlast))))
+	
+		
+    	
+		(insertCables cablesNumber cablesString height)
 		(insertPole poleNumberA poleTypeA poleStationA globalX_A)
 		(insertPole poleNumberB poleTypeB poleStationB globalX_B)
 		(setq globalX (+ globalX globalNextX))
   )
+  
+  (createLayouts createdCrossSections)
   (switchDefaultSystemVars nil)
-  
-  
+  (setvar "ctab" "Model")
+  (command "_layer" "_off" "RAMKA" "")
+  (warningAlert)
+  (CloseExcel nil)
   ;do layoutu (setq entName (ssname layoutsPreviewSs i)
   (princ)
 )
+
+
+
 
