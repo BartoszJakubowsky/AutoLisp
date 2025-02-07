@@ -177,7 +177,7 @@
   (setq attPoleFunction (getValue "FUNKCJA" attr))
   (setq attPoleStation (getValue "STACJA" attr))
   (setq attPoleNumberOK (getValue "NUMER_OK" attr))
-;   (setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation attPoleNumberOK))
+   ;(setq attrForExport (list attPoleType attPoleNumber attPoleFunction attPoleStation attPoleNumberOK))
   (setq attrForExport (strcat attPoleType "_" attPoleNumber "_" attPoleFunction "_" attPoleStation "_" attPoleNumberOK))
 
 
