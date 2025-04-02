@@ -70,13 +70,30 @@
 		(progn (getValue tag attr))
 		
     )
+	
+	; (defun convertMiddlePointToString(middlePoint)
+	; 	(setq coords1 (rtos (nth 0 middlePoint)))
+	; 	(setq coords2 (rtos (nth 0 middlePoint)))
+	; 	(progn (strcat coords1 "_" coords2))
+    ; )
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  	;;;;;;;;;;;;;;;;; START ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	
+	(setq middlePoint (getpoint "Select middle point"))
 	(setq insertPoint (getpoint "Select insert point"))
 	(setq poleA (car (entsel "Select pole A")))
-	(setq poleB (car (entsel "Select pole B")))
+	(setq poleB (car (entsel "Select pole B or house text")))
 
 	(if (or (not poleA) (not poleB))
 		(progn
 			(alert "One of the poles is not selected")
+			(exit)
+		)
+	)
+	(if (not middlePoint)
+		(progn
+			(alert "Middle point is not selected")
 			(exit)
 		)
 	)
@@ -89,16 +106,19 @@
 	)
 	
 	(insertCrossSection insertPoint)
-	(setq highestNumber (+ 1 (getHighestCrossSectionNumber)))
+	(setq highestNumber	 (+ 1 (getHighestCrossSectionNumber)))
 	(setq crossSection (vlax-ename->vla-object (entlast)))
+  
 	(editAtt crossSection "NR" highestNumber)
   
   	(setq hook (cdr(assoc 5 (entget poleA))))	
 	(editAtt crossSection "A" hook)
   	
-  	(setq hook (cdr(assoc 5 (entget poleB))))	
+  	(setq hook (cdr(assoc 5 (entget poleB))))		
 	(editAtt crossSection "B" hook)
 
+	(editAtt crossSection "MIDPOINT_X" (nth 0 middlePoint))
+	(editAtt crossSection "MIDPOINT_Y" (nth 1 middlePoint))
 	;handent for bringing back ent id
 	(princ)
 )

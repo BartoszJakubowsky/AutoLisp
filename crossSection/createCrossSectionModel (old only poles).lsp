@@ -46,10 +46,9 @@
     )
   )
   (defun getPoleHeight (poleType)
-    
     (if (vl-string-search "9" poleType)
 		(progn "9")
-		(if (or (vl-string-search "10" poleType) (= poleType "HOUSE"))
+		(if (vl-string-search "10" poleType)
 			(progn "10")
 			(progn nil)
     	)
@@ -139,21 +138,6 @@
     (editAtt (vlax-ename->vla-object (entlast)) "TYP_SLUPA" typeP)
     (editAtt (vlax-ename->vla-object (entlast)) "STACJA" station)
   )
-  
-
-  (defun insertHouse(address x)
-	(setq side nil)
-
-	(if (= x globalX_A)
-		(setq side "L")
-		(setq side "R")
-	)
-
-	(setq insertHouseBlock (strcat "HOUSE_" side))
-	(command "_insert" insertHouseBlock (list (+ globalX x) globalYHeight) "1" "0" "0" nil)
-    
-    (editAtt (vlax-ename->vla-object (entlast)) "ADDRESS" address)
-  )
   (defun createLayouts (entList)
 	(setq totalLayouts (length entList))
 	(defun getValue (num entity)
@@ -230,39 +214,14 @@
 		; (setq cablesString "proj. ADSS 2J\nistn. AsXSn 4x95")
 
 		
-		(if (or (= poleNumberA "HOUSE") (= poleNumberB "HOUSE"))
-			(progn
-				(if (= poleNumberA "HOUSE")
-					(setq height (insertCrossSection crossSectionNumber crossSectionHeight "HOUSE" poleTypeB))
-					(setq height (insertCrossSection crossSectionNumber crossSectionHeight poleTypeA "HOUSE"))
-                )
-            )
-			(setq height (insertCrossSection crossSectionNumber crossSectionHeight poleTypeA poleTypeB))
-        )
+		(setq height (insertCrossSection crossSectionNumber crossSectionHeight poleTypeA poleTypeB))
 		(setq createdCrossSections (append createdCrossSections (list (entlast))))
 	
 		
     	
 		(insertCables cablesNumber cablesString height)
-    
-		(if (or (= poleNumberA "HOUSE") (= poleNumberB "HOUSE"))
-			(progn
-				(if (= poleNumberA "HOUSE")
-					(progn
-       					(insertHouse poleTypeA globalX_A)
-						(insertPole poleNumberB poleTypeB poleStationB globalX_B)
-                    )
-						(progn
-        					(insertHouse poleTypeB globalX_B)
-							(insertPole poleNumberA poleTypeA poleStationA globalX_A)
-                        )
-                )
-            )
-			(progn
-				(insertPole poleNumberA poleTypeA poleStationA globalX_A)
-				(insertPole poleNumberB poleTypeB poleStationB globalX_B)
-            )
-        )
+		(insertPole poleNumberA poleTypeA poleStationA globalX_A)
+		(insertPole poleNumberB poleTypeB poleStationB globalX_B)
 		(setq globalX (+ globalX globalNextX))
   )
   

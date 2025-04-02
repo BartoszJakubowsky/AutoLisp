@@ -101,18 +101,10 @@
           )
           (progn cablesNumber)
         )
-
-		(setq midPointPoles nil)
+		(setq coordsA (getValue 10 poleA))
+		(setq coordsB (getValue 10 poleB))
       
-		(if (= poleB nil)
-			(setq midPointPoles poleA)
-			(progn
-				(setq coordsA (getValue 10 poleA))
-				(setq coordsB (getValue 10 poleB))
-			
-				(setq midPointPoles (getMidPoint coordsA coordsB)) 
-            )
-        )
+		(setq midPointPoles (getMidPoint coordsA coordsB)) 
 		(setq fibers '())
 		(progn
 			(setq selectedEntities (getObjects midPointPoles))
@@ -144,15 +136,6 @@
 		(progn (getValue tag attr))
 
 	)
-	(defun splitStr ( s d / p )
-		(if (setq p (vl-string-search d s))
-	(cons (substr s 1 p) (SplitStr (substr s (+ p 1 (strlen d))) d)) (list s))
-	)
-	; (defun convertMiddlePointToList (middlePointString)
-	; 	(setq coords1 (atof (nth 0(splitStr middlePointString "_"))))
-	; 	(setq coords2 (atof (nth 1(splitStr middlePointString "_"))))
-	; 	(progn (list coords1 coords2 0.0))
-	; )
 	;number height poleA poleB (to be handent)
 	(defun getAllCrossSections ()
 		(setq allCrossSectionsData '())
@@ -171,7 +154,7 @@
 			(setq poleA (getAtt vla-obj "A"))
 			(setq poleB (getAtt vla-obj "B"))
 
-			(setq middlePoint (list (atof (getAtt vla-obj "MIDPOINT_X")) (atof (getAtt vla-obj "MIDPOINT_Y"))))
+			(setq middlePoint (getAtt vla-obj "MIDPOINT"))
 
 			(setq crossSectionData (list number height poleA poleB middlePoint))
 			(setq allCrossSectionsData (cons crossSectionData allCrossSectionsData))
@@ -183,14 +166,6 @@
 	(defun getMidPoint (p1 p2)
 		(polar p1 (angle p1 p2) (/ (distance p1 p2) 2.) )
 	)
-	(defun isHandentPole (ent)
-      (setq entType (getValue 0 (entget ent)))
-
-      (if (= entType "INSERT")
-        (progn T)
-        (progn nil)
-      )
-    )
 	(defun collectCrossSectionData (dataList)
       (setq collectedDataList '())
       (foreach data dataList
@@ -198,73 +173,26 @@
 			(setq height (nth 1 data))
 			(setq poleA (handent (nth 2 data)))
 			(setq poleB (handent (nth 3 data)))
-        	(setq middlePoint  (nth 4 data))
-        
+			
 			(setq vla-obj-poleA (vlax-ename->vla-object poleA))
 			(setq vla-obj-poleB (vlax-ename->vla-object poleB))
 
-        	(setq isPoleA (isHandentPole poleA))
-			(setq isPoleB (isHandentPole poleB))
-
-			(setq cables nil)
-        
-			(if (or (not isPoleA) (not isPoleB))
-				(setq cables (getCables middlePoint nil))	
-				(setq cables (getCables (entget poleA) (entget poleB)))
-            )
-			(setq collectedData nil)
-        
-			(if (or (not isPoleA) (not isPoleB))
-				;one pole is house
-				(progn
-					(if (not isPoleA)
-							(list 
-								number 
-								height 
-								"HOUSE" 
-								(vlax-get-property vla-obj-poleA 'TextString) ;alternative vla-get-textstring
-								""
-								(getAtt vla-obj-poleB "NUMER") 
-								(getAtt vla-obj-poleB "TYP_SLUPA") 
-								(getAtt vla-obj-poleB "STACJA")
-								(nth 0 cables) ;cables number
-								(nth 1 cables) ;cables string
-							)
-							(setq collectedData 
-							(list 
-								number 
-								height 
-								(getAtt vla-obj-poleA "NUMER") 
-								(getAtt vla-obj-poleA "TYP_SLUPA") 
-								(getAtt vla-obj-poleA "STACJA")
-								"HOUSE"
-								(vlax-get-property vla-obj-poleB 'TextString) ;alternative vla-get-textstring
-								""
-								(nth 0 cables) ;cables number
-								(nth 1 cables) ;cables string
-							)
-							)
-                    )
+			;list numer typ_slupa stacja
+			(setq cables (getCables (entget poleA) (entget poleB)))	
+			(setq collectedData 
+                (list 
+                  number 
+                  height 
+                  (getAtt vla-obj-poleA "NUMER") 
+                  (getAtt vla-obj-poleA "TYP_SLUPA") 
+                  (getAtt vla-obj-poleA "STACJA")
+				  (getAtt vla-obj-poleB "NUMER") 
+                  (getAtt vla-obj-poleB "TYP_SLUPA") 
+                  (getAtt vla-obj-poleB "STACJA")
+                  (nth 0 cables) ;cables number
+                  (nth 1 cables) ;cables string
                 )
-				;all poles are poles
-				(progn
-					(setq collectedData 
-						(list 
-							number 
-							height 
-							(getAtt vla-obj-poleA "NUMER") 
-							(getAtt vla-obj-poleA "TYP_SLUPA") 
-							(getAtt vla-obj-poleA "STACJA")
-							(getAtt vla-obj-poleB "NUMER") 
-							(getAtt vla-obj-poleB "TYP_SLUPA") 
-							(getAtt vla-obj-poleB "STACJA")
-							(nth 0 cables) ;cables number
-							(nth 1 cables) ;cables string
-						)
-					)
-				)
             )
-			
      		(setq collectedDataList (append collectedDataList (list collectedData)))
 
 	  )

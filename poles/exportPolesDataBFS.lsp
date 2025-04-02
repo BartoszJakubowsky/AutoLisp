@@ -35,7 +35,7 @@
 	  (setq columnCounter (1+ columnCounter))
 
     )
-    (setq rowCounter (+ 4 rowCounter))	
+    (setq rowCounter (+ 5 rowCounter))	
   	(setq columnCounter 1)
   )
   (CloseExcel finalExcelPath)
@@ -255,9 +255,19 @@
 	(progn unsegregatedListOfCablesWithPole)
 	
 )
+(defun getLength (ent)
+	(setq obj (vlax-ename->vla-object  ent)) 
+	; (if (vlax-property-available-p obj "Length") 
+	; (progn
+	; 	(setq len (vlax-get obj "Length")) 
+	; )
+	; )
+	(progn (setq len (vlax-get obj "Length")))
+)
 (defun segregateData (unsegregatedListOfCablesWithPole)
   (setq segregatedList '())
   (setq bannedEnt '())
+  ;cables segregation
   (foreach data unsegregatedListOfCablesWithPole
     (setq dataType (nth 0 data))
     (setq dataName (nth 1 data))
@@ -296,11 +306,13 @@
           ); progn end
         );if end
     )
+    ;here is cables data (name, coords, lenghts)
     (if (and (not (member dataEntName bannedEnt)) (not (equal dataType "p")))
-      (setq segregatedList (cons (list dataType dataName dataCoords1 dataCoords2) segregatedList))
+      (setq segregatedList (cons (list dataType dataName dataCoords1 dataCoords2 (getLength dataEntName)) segregatedList))
     )
     (setq bannedEnt (cons dataEntName bannedEnt))
   );end of first foreach
+  ;pole's data (nth 0 unsegregatedListOfCablesWithPole)
   (setq segregatedList (cons (nth 0 unsegregatedListOfCablesWithPole) segregatedList))
   (progn segregatedList)
 )
